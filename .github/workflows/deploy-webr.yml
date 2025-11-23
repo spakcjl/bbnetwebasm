@@ -41,7 +41,7 @@ jobs:
           # We build into webr-repo
           message("Building package...")
           tryCatch({
-            res <- add_pkg(".", repo_dir = "webr-repo")
+            res <- add_pkg(".", repo_dir = "webr-repo", dependencies = FALSE)
             print(res)
           }, error = function(e) {
             message("Error adding package: ", e$message)
