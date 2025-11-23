@@ -40,7 +40,12 @@ async function initWebR() {
             }
         }
 
+        // Install igraph manually (since we removed it from DESCRIPTION to fix build)
+        statusDiv.innerHTML += '<br>Installing igraph...';
+        await webR.installPackages(['igraph']);
+
         // Install the package
+        statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
         await webR.installPackages(['bbnetwebasm'], {
             repos: [repoURL]
         });

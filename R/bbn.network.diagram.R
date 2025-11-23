@@ -33,7 +33,6 @@
 #' @importFrom ggplot2 ggplot geom_point geom_errorbar geom_bar aes theme element_text coord_flip scale_y_continuous geom_smooth labs theme_classic scale_color_grey xlab ylab theme
 #' @importFrom stats runif na.omit quantile
 #' @importFrom grDevices dev.off pdf gray.colors
-#' @importFrom igraph graph_from_data_frame
 #' @importFrom grid pushViewport viewport grid.layout grid.newpage
 #' @importFrom tibble tibble add_column
 #'
@@ -41,65 +40,69 @@
 #'
 #' @examples
 #' data(my_network)
-#' bbn.network.diagram(bbn.network = my_network, font.size=0.7,
-#'   arrow.size=4, arrange = layout_on_sphere)
+#' \dontrun{
+#' bbn.network.diagram(
+#'   bbn.network = my_network, font.size = 0.7,
+#'   arrow.size = 4, arrange = igraph::layout_on_sphere
+#' )
+#' }
 #'
 #' @export
-bbn.network.diagram <- function(bbn.network, font.size=0.7, arrow.size=4, arrange = layout_on_sphere){
+bbn.network.diagram <- function(bbn.network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_on_sphere) {
+  if (!requireNamespace("igraph", quietly = TRUE)) {
+    stop("Package \"igraph\" needed for this function to work. Please install it.",
+      call. = FALSE
+    )
+  }
 
   dta <- bbn.network
 
-  edges <-  data.frame(from=character(),to=character(),weight=integer(),type=integer(),stringsAsFactors=FALSE)
+  edges <- data.frame(from = character(), to = character(), weight = integer(), type = integer(), stringsAsFactors = FALSE)
 
-  nodes <- dta[,1:3]
+  nodes <- dta[, 1:3]
 
   size.data <- dim(dta)[1]
 
-  dta <- dta[,4:(size.data+3)]
+  dta <- dta[, 4:(size.data + 3)]
 
-  edge.count<-0
+  edge.count <- 0
 
-  for(x in 1:size.data){
-    for(y in 1:size.data){
-      if(is.na(dta[x,y])==F){
-        edge.count <- edge.count+1
-        edges[edge.count,1] <- as.character(nodes$id[x])
-        edges[edge.count,2] <- as.character(nodes$id[y])
-        if(dta[x,y]>0){
-          edges[edge.count,3] <- dta[x,y]
-          edges[edge.count,4] <- 1 # 1 = positive interaction, 2 = negative interaction
-
+  for (x in 1:size.data) {
+    for (y in 1:size.data) {
+      if (is.na(dta[x, y]) == F) {
+        edge.count <- edge.count + 1
+        edges[edge.count, 1] <- as.character(nodes$id[x])
+        edges[edge.count, 2] <- as.character(nodes$id[y])
+        if (dta[x, y] > 0) {
+          edges[edge.count, 3] <- dta[x, y]
+          edges[edge.count, 4] <- 1 # 1 = positive interaction, 2 = negative interaction
         }
-        if(dta[x,y]<0){
-
-          edges[edge.count,3] <- dta[x,y]*-1
-          edges[edge.count,4] <- 2}
-
-
+        if (dta[x, y] < 0) {
+          edges[edge.count, 3] <- dta[x, y] * -1
+          edges[edge.count, 4] <- 2
+        }
       }
-
     }
   }
 
-  #write.csv(edges, 'EDGES_dept.csv')
+  # write.csv(edges, 'EDGES_dept.csv')
 
   links <- edges
 
-  net <- graph_from_data_frame(d=links, vertices=nodes, directed=T)
+  net <- igraph::graph_from_data_frame(d = links, vertices = nodes, directed = T)
 
   # Generate colors based on node type:
   colrs <- c("gray50", "tomato", "gold", "white")
-  V(net)$color <- colrs[V(net)$node.type]
+  igraph::V(net)$color <- colrs[igraph::V(net)$node.type]
 
   colrs2 <- c("black", "red")
-  E(net)$color <- colrs2[E(net)$type]
+  igraph::E(net)$color <- colrs2[igraph::E(net)$type]
 
-  E(net)$width <- E(net)$weight*(arrow.size/4)
-  V(net)$label.cex <-font.size
-  V(net)$label.color <- 'blue'
+  igraph::E(net)$width <- igraph::E(net)$weight * (arrow.size / 4)
+  igraph::V(net)$label.cex <- font.size
+  igraph::V(net)$label.color <- "blue"
 
-  #l <- layout_on_sphere(net)
+  # l <- layout_on_sphere(net)
 
-  print(plot(net, edge.arrow.size=0.3,vertex.label=nodes$node.name,edge.curved=.2, layout  =arrange))
-
+  print(plot(net, edge.arrow.size = 0.3, vertex.label = nodes$node.name, edge.curved = .2, layout = arrange))
 }
