@@ -1,0 +1,10 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^codecov\.yml$
+^\.github$
+^LICENSE\.md$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^data_raw$
+^BBN_Output_RenameMe\.pdf$
