@@ -55,7 +55,7 @@ async function initWebR() {
 
     } catch (error) {
         console.error('Error initializing webR:', error);
-        statusDiv.textContent = 'Error: ' + error.message;
+        statusDiv.innerHTML += '<br>Error: ' + error.message;
         statusDiv.style.backgroundColor = '#f8d7da';
         statusDiv.style.color = '#721c24';
     }
