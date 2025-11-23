@@ -41,6 +41,9 @@ jobs:
           add_pkg(".", repo_dir = "webr-repo")
         shell: Rscript {0}
 
+      - name: Debug - List repo contents
+        run: ls -R webr-repo
+
       - name: Upload Wasm repo artifact
         uses: actions/upload-artifact@v4
         with:
