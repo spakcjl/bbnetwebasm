@@ -13,8 +13,8 @@ Description: A system to build, visualise and evaluate Bayesian belief networks.
 License: GPL (>= 2)
 URL: https://github.com/spakcjl/bbnetwebasm
 BugReports: https://github.com/spakcjl/bbnetwebasm/issues
-Depends: R (>= 3.5.0)
-Imports: dplyr, ggplot2, igraph, tibble
+Depends: R
+# Imports: dplyr, ggplot2, igraph, tibble
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
