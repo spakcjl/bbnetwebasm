@@ -49,7 +49,7 @@ async function initWebR() {
         // Install the package
         statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
         await webR.installPackages(['bbnetwebasm'], {
-            repos: [repoURL]
+            repos: [repoURL, 'https://webr.r-wasm.org/latest/']
         });
 
         // Load the library
