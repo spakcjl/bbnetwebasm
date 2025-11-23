@@ -21,6 +21,25 @@ async function initWebR() {
         const repoURL = new URL('repo/', window.location.href).toString();
         console.log('Repo URL:', repoURL);
 
+        // Probe for PACKAGES file to debug path issues
+        const rVersions = ['4.3', '4.4', '4.5'];
+        for (const version of rVersions) {
+            const probeURL = new URL(`bin/emscripten/contrib/${version}/PACKAGES`, repoURL).toString();
+            console.log(`Probing ${probeURL}...`);
+            statusDiv.innerHTML += `<br>Probing ${version}...`;
+            try {
+                const response = await fetch(probeURL, { method: 'HEAD' });
+                console.log(`Probe ${version}: ${response.status} ${response.statusText}`);
+                statusDiv.innerHTML += ` ${response.status} ${response.statusText}`;
+                if (response.ok) {
+                    statusDiv.innerHTML += ` (Found!)`;
+                }
+            } catch (e) {
+                console.log(`Probe ${version} failed:`, e);
+                statusDiv.innerHTML += ` Failed: ${e.message}`;
+            }
+        }
+
         // Install the package
         await webR.installPackages(['bbnetwebasm'], {
             repos: [repoURL]
