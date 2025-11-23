@@ -3,9 +3,9 @@ Package: bbnetwebasm
 Title: Create Simple Predictive Models on Bayesian Belief Networks
 Version: 1.2.1
 Authors@R: c(
-    person("Victoria", "Dominguez Almela", , "vda1r22@soton.ac.uk", role = c("cre","aut"),
+    person("Victoria", "Dominguez Almela", email = "vda1r22@soton.ac.uk", role = c("cre","aut"),
            comment = c(ORCID = "0000-0003-4877-5967")),
-           person("Richard", "Stafford", , "rstafford@bournemouth.ac.uk", role = c("cph", "aut"),
+    person("Richard", "Stafford", email = "rstafford@bournemouth.ac.uk", role = c("cph", "aut"),
            comment = c(ORCID = "0000-0002-1964-5787"))
     )
 Maintainer: Victoria Dominguez Almela <vda1r22@soton.ac.uk>
