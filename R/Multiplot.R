@@ -25,10 +25,8 @@
 #' @param layout An optional matrix specifying the layout of plots. Overrides \code{cols} if provided.
 #'
 #' @importFrom dplyr mutate recode "%>%"
-#' @importFrom ggplot2 ggplot geom_point geom_errorbar geom_bar aes theme element_text coord_flip scale_y_continuous geom_smooth labs theme_classic scale_color_grey xlab ylab theme
 #' @importFrom stats runif na.omit quantile
 #' @importFrom grDevices dev.off pdf gray.colors
-#' @importFrom igraph graph_from_data_frame
 #' @importFrom grid pushViewport viewport grid.layout grid.newpage
 #' @importFrom tibble tibble add_column
 #'
@@ -36,43 +34,45 @@
 #'
 #' @examples
 #' # Load necessary library
-#' library(ggplot2)
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   library(ggplot2)
 #'
-#' # Create example ggplot objects
-#' plot1 <- ggplot(mtcars, aes(x=mpg, y=wt)) + geom_point()
-#' plot2 <- ggplot(mtcars, aes(x=mpg, y=cyl)) + geom_point()
-#' plot3 <- ggplot(mtcars, aes(x=gear, y=wt)) + geom_point()
+#'   # Create example ggplot objects
+#'   plot1 <- ggplot(mtcars, aes(x = mpg, y = wt)) +
+#'     geom_point()
+#'   plot2 <- ggplot(mtcars, aes(x = mpg, y = cyl)) +
+#'     geom_point()
+#'   plot3 <- ggplot(mtcars, aes(x = gear, y = wt)) +
+#'     geom_point()
 #'
-#' # Plot all three plots in a single row
-#' multiplot(plot1, plot2, plot3, cols=3)
+#'   # Plot all three plots in a single row
+#'   multiplot(plot1, plot2, plot3, cols = 3)
 #'
-#' # Plot using a custom layout
-#' layout_matrix <- matrix(c(1,2,3,3), nrow=2, byrow=TRUE)
+#'   # Plot using a custom layout
+#'   layout_matrix <- matrix(c(1, 2, 3, 3), nrow = 2, byrow = TRUE)
 #'
-#' multiplot(plotlist=list(plot1, plot2, plot3), layout=layout_matrix)
-#'
-#'
+#'   multiplot(plotlist = list(plot1, plot2, plot3), layout = layout_matrix)
+#' }
 #'
 #' @export
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-
+multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL) {
   # Make a list from the ... arguments and plotlist
   plots <- c(list(...), plotlist)
 
-  numPlots = length(plots)
+  numPlots <- length(plots)
 
   # If layout is NULL, then use 'cols' to determine layout
   if (is.null(layout)) {
     # Make the panel
     # ncol: Number of columns of plots
     # nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                     ncol = cols, nrow = ceiling(numPlots/cols))
+    layout <- matrix(seq(1, cols * ceiling(numPlots / cols)),
+      ncol = cols, nrow = ceiling(numPlots / cols)
+    )
   }
 
-  if (numPlots==1) {
+  if (numPlots == 1) {
     print(plots[[1]])
-
   } else {
     # Set up the page``
     grid.newpage()
@@ -83,8 +83,10 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
       # Get the i,j matrix positions of the regions that contain this subplot
       matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
 
-      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                      layout.pos.col = matchidx$col))
+      print(plots[[i]], vp = viewport(
+        layout.pos.row = matchidx$row,
+        layout.pos.col = matchidx$col
+      ))
     }
   }
 }

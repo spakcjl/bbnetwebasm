@@ -40,9 +40,11 @@ async function initWebR() {
             }
         }
 
-        // Install igraph manually (since we removed it from DESCRIPTION to fix build)
-        statusDiv.innerHTML += '<br>Installing igraph...';
-        await webR.installPackages(['igraph']);
+        // Install igraph and ggplot2 first
+        statusDiv.innerHTML += '<br>Installing dependencies (igraph, ggplot2)...';
+        await webR.installPackages(['igraph', 'ggplot2'], {
+            repos: ['https://webr.r-wasm.org/latest/'] // Use webR's default repo
+        });
 
         // Install the package
         statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
