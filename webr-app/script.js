@@ -40,9 +40,9 @@ async function initWebR() {
             }
         }
 
-        // Install igraph and ggplot2 first
-        statusDiv.innerHTML += '<br>Installing dependencies (igraph, ggplot2)...';
-        await webR.installPackages(['igraph', 'ggplot2'], {
+        // Install dependencies manually
+        statusDiv.innerHTML += '<br>Installing dependencies (igraph, ggplot2, dplyr, tibble)...';
+        await webR.installPackages(['igraph', 'ggplot2', 'dplyr', 'tibble'], {
             repos: ['https://webr.r-wasm.org/latest/'] // Use webR's default repo
         });
 

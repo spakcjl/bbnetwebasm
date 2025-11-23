@@ -30,7 +30,8 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages("pak")
-          pak::pkg_install(c("r-wasm/rwasm", "pkgdown", "."))
+          # Install dependencies explicitly since we removed them from DESCRIPTION to avoid build errors
+          pak::pkg_install(c("r-wasm/rwasm", "pkgdown", "dplyr", "tibble"))
         shell: Rscript {0}
 
       - name: Build R package for Wasm
