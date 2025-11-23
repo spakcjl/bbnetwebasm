@@ -34,11 +34,20 @@ jobs:
         shell: Rscript {0}
 
       - name: Build R package for Wasm
-        run: |
           library(rwasm)
           # Build the package and add it to the repo
           # We build into webr-repo
-          add_pkg(".", repo_dir = "webr-repo")
+          message("Building package...")
+          tryCatch({
+            res <- add_pkg(".", repo_dir = "webr-repo")
+            print(res)
+          }, error = function(e) {
+            message("Error adding package: ", e$message)
+            quit(status = 1)
+          })
+          
+          message("Listing repo content after build:")
+          list.files("webr-repo", recursive = TRUE)
         shell: Rscript {0}
 
       - name: Debug - List repo contents
