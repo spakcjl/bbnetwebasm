@@ -1,12 +1,9 @@
 Package: bbnetwebasm
 Type: Package
-Title: Create Simple Predictive Models on Bayesian Belief Networks
+Title: Minimal Package for WebR
 Version: 1.0.0
-Author: Victoria Dominguez Almela and Richard Stafford
+Author: Victoria Dominguez Almela
 Maintainer: Victoria Dominguez Almela <vda1r22@soton.ac.uk>
 Description: A system to build, visualise and evaluate Bayesian belief networks.
 License: GPL (>= 2)
-Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.3.2
-Imports: dplyr, ggplot2, igraph, tibble
+

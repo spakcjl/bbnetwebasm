@@ -40,8 +40,8 @@ jobs:
           # Build the package and add it to the repo
           message("Building package...")
           tryCatch({
-            # dependencies = TRUE will build dependencies for Wasm
-            res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = TRUE)
+            # dependencies = FALSE prevents building dependencies
+            res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = FALSE)
             print(res)
           }, error = function(e) {
             message("Error adding package: ", e$message)
