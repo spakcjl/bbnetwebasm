@@ -21,7 +21,14 @@ async function initWebR() {
         const repoURL = new URL('repo/', window.location.href).toString();
         console.log('Repo URL:', repoURL);
 
-        // Install the package. Dependencies will be installed automatically.
+        // Install dependencies manually
+        statusDiv.innerHTML += '<br>Installing dependencies (igraph, ggplot2, dplyr, tibble)...';
+        await webR.installPackages(['igraph', 'ggplot2', 'dplyr', 'tibble'], {
+            repos: ['https://webr.r-wasm.org/latest/'] // Use webR's default repo
+        });
+
+        // Install the package
+        statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
         await webR.installPackages(['bbnetwebasm'], {
             repos: [repoURL, 'https://webr.r-wasm.org/latest/']
         });
