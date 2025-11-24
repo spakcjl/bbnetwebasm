@@ -16,3 +16,9 @@ BugReports: https://github.com/spakcjl/bbnetwebasm/issues
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
+Imports: 
+    dplyr,
+    ggplot2,
+    igraph,
+    tibble
+Date: 2025-11-24
