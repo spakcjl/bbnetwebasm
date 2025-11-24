@@ -37,6 +37,16 @@ jobs:
       - name: Build R package for Wasm
         run: |
           library(rwasm)
+          # Ensure webR toolchain is present
+          webr_root <- tryCatch(download_webr(version = "0.4.2"), error = function(e) { NULL })
+          if (!is.null(webr_root)) {
+            use_webr(webr_root)
+            Sys.setenv(WEBR_ROOT = webr_root)
+            message("Using webR toolchain at: ", webr_root)
+          } else {
+            stop("Failed to download/configure webR toolchain")
+          }
+
           # Build the package and add it to the repo (include dependencies)
           message("Building package with dependencies...")
           res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = TRUE)
