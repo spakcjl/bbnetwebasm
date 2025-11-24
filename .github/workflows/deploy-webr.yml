@@ -44,6 +44,21 @@ jobs:
           
           message("Listing repo content after build:")
           list.files("webr-repo", recursive = TRUE)
+
+          message("Inspecting PACKAGES metadata:")
+          pkg_files <- list.files("webr-repo", pattern = "^PACKAGES$", recursive = TRUE, full.names = TRUE)
+          print(pkg_files)
+          for (f in pkg_files) {
+            cat("----", f, "----\n")
+            cat(readLines(f), sep = "\n")
+            cat("\n")
+          }
+
+          # Fail fast if bbnetwebasm isn't present in any PACKAGES file
+          found <- any(vapply(pkg_files, function(f) any(grepl("^Package: bbnetwebasm$", readLines(f))), logical(1)))
+          if (!found) {
+            stop("bbnetwebasm is not present in PACKAGES metadata; build likely failed")
+          }
         shell: Rscript {0}
 
       - name: Debug - List repo contents

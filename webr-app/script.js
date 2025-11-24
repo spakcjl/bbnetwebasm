@@ -16,12 +16,25 @@ async function initWebR() {
 
         statusDiv.textContent = 'Installing bbnetwebasm...';
 
-        // Construct absolute URL for the repo
-        // We assume the repo is at ./repo/ relative to index.html
-        const repoURL = new URL('repo/', window.location.href).toString();
+        // Construct absolute URL for the repo (ensure trailing slash)
+        const repoURL = new URL('./repo/', window.location.href).toString();
         console.log('Repo URL:', repoURL);
         const defaultWebRRepo = 'https://webr.r-wasm.org/latest/';
         const bbnetRepos = [repoURL, defaultWebRRepo];
+
+        // Quick check: try to fetch PACKAGES for diagnostics
+        try {
+            const pkgResp = await fetch(new URL('PACKAGES', repoURL));
+            if (pkgResp.ok) {
+                const pkgTxt = await pkgResp.text();
+                console.log('PACKAGES contents:\n', pkgTxt);
+            } else {
+                console.warn('PACKAGES not reachable at', repoURL, pkgResp.status);
+                statusDiv.innerHTML += `<br>PACKAGES not reachable at ${repoURL} (status ${pkgResp.status})`;
+            }
+        } catch (e) {
+            console.warn('Error fetching PACKAGES:', e);
+        }
 
         // Install dependencies manually
         statusDiv.innerHTML += '<br>Installing dependencies (igraph, ggplot2, dplyr, tibble)...';
