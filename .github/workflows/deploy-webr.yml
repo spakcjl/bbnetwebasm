@@ -37,9 +37,11 @@ jobs:
       - name: Build R package for Wasm
         run: |
           library(rwasm)
+          message("Configuring webR toolchain...")
+          configure_webr(version = "0.4.2")
           # Build the package and add it to the repo (include dependencies)
           message("Building package with dependencies...")
-          res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = TRUE)
+          res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = TRUE, webr_root = Sys.getenv("WEBR_ROOT"))
           print(res)
           
           message("Listing repo content after build:")
@@ -112,9 +114,11 @@ jobs:
       - name: Rebuild wasm repo in webr-app/repo
         run: |
           library(rwasm)
+          message("Configuring webR toolchain...")
+          configure_webr(version = "0.4.2")
           dir.create("webr-app/repo", showWarnings = FALSE, recursive = TRUE)
           message("Rebuilding package with dependencies into webr-app/repo ...")
-          res <- add_pkg("local::.", repo_dir = "webr-app/repo", dependencies = TRUE)
+          res <- add_pkg("local::.", repo_dir = "webr-app/repo", dependencies = TRUE, webr_root = Sys.getenv("WEBR_ROOT"))
           print(res)
           message("Contents of rebuilt repo:")
           list.files("webr-app/repo", recursive = TRUE)
