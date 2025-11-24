@@ -77,13 +77,14 @@ async function initWebR() {
             }
         }
 
-        // Verify install by querying installed packages (helps debug cache issues)
-        const installed = await webR.evalR(`as.data.frame(utils::installed.packages()[, c("Package", "Version")])`);
-        console.log("Installed packages:", installed);
-        const hasPkg = installed.values.some(row => row[0] === 'bbnetwebasm');
-        if (!hasPkg || !installSucceeded) {
+        // Verify install by attempting to load the package
+        try {
+            await webR.evalR('library(bbnetwebasm)');
+            console.log('bbnetwebasm loaded successfully.');
+        } catch (e) {
+            console.error('Failed to load bbnetwebasm after install:', e);
             statusDiv.innerHTML += '<br>bbnetwebasm not installed; see console for details.';
-            throw new Error('bbnetwebasm not installed');
+            throw e;
         }
 
         // Load the library
