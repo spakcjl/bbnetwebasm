@@ -6,4 +6,12 @@ Author: Victoria Dominguez Almela
 Maintainer: Victoria Dominguez Almela <vda1r22@soton.ac.uk>
 Description: A system to build, visualise and evaluate Bayesian belief networks.
 License: GPL (>= 2)
-
+Imports:
+    ggplot2,
+    dplyr,
+    tibble,
+    grid,
+    grDevices,
+    stats,
+    igraph
+Encoding: UTF-8

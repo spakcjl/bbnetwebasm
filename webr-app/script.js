@@ -20,6 +20,8 @@ async function initWebR() {
         // We assume the repo is at ./repo/ relative to index.html
         const repoURL = new URL('repo/', window.location.href).toString();
         console.log('Repo URL:', repoURL);
+        const defaultWebRRepo = 'https://webr.r-wasm.org/latest/';
+        const bbnetRepos = [repoURL, defaultWebRRepo];
 
         // Install dependencies manually
         statusDiv.innerHTML += '<br>Installing dependencies (igraph, ggplot2, dplyr, tibble)...';
@@ -29,9 +31,17 @@ async function initWebR() {
 
         // Install the package
         statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
-        await webR.installPackages(['bbnetwebasm'], {
-            repos: [repoURL, 'https://webr.r-wasm.org/latest/']
-        });
+        try {
+            await webR.installPackages(['bbnetwebasm'], {
+                repos: bbnetRepos
+            });
+        } catch (err) {
+            console.warn('Local repo install failed, falling back to default webR repo', err);
+            statusDiv.innerHTML += '<br>Local repo not found; trying public repo...';
+            await webR.installPackages(['bbnetwebasm'], {
+                repos: [defaultWebRRepo]
+            });
+        }
 
         // Load the library
         await webR.evalR('library(bbnetwebasm)');

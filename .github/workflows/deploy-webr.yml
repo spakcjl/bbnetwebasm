@@ -37,16 +37,10 @@ jobs:
       - name: Build R package for Wasm
         run: |
           library(rwasm)
-          # Build the package and add it to the repo
-          message("Building package...")
-          tryCatch({
-            # dependencies = FALSE prevents building dependencies
-            res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = FALSE)
-            print(res)
-          }, error = function(e) {
-            message("Error adding package: ", e$message)
-            quit(status = 1)
-          })
+          # Build the package and add it to the repo (include dependencies)
+          message("Building package with dependencies...")
+          res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = TRUE)
+          print(res)
           
           message("Listing repo content after build:")
           list.files("webr-repo", recursive = TRUE)
