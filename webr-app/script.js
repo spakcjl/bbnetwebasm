@@ -56,13 +56,13 @@ async function initWebR() {
 
         // Install the package
         statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
-        // Force source installs from our repo to avoid binary lookup (bin/emscripten/4.4)
+        // Install as binary from our pseudo-binary repo (bin/emscripten/contrib/4.4)
         let installSucceeded = false;
         try {
-            console.log('Installing bbnetwebasm from source via repos', bbnetRepos);
+            console.log('Installing bbnetwebasm as binary from repos', bbnetRepos);
             await webR.evalR(`
-              options(pkgType = "source", repos = c("local" = "${repoURL}"))
-              install.packages("bbnetwebasm", type = "source", repos = "${repoURL}", dependencies = TRUE)
+              options(repos = c("local" = "${repoURL}"))
+              install.packages("bbnetwebasm")
             `);
             installSucceeded = true;
         } catch (err) {
