@@ -36,6 +36,18 @@ async function initWebR() {
             console.warn('Error fetching PACKAGES:', e);
         }
 
+        // Check that the tarball is reachable
+        const tarballUrl = new URL('src/contrib/bbnetwebasm_1.0.0.tar.gz', repoURL).toString();
+        try {
+            const tbResp = await fetch(tarballUrl, { method: 'HEAD' });
+            console.log('Tarball HEAD status', tbResp.status, tarballUrl);
+            if (!tbResp.ok) {
+                statusDiv.innerHTML += `<br>Tarball not reachable (${tbResp.status}) at ${tarballUrl}`;
+            }
+        } catch (e) {
+            console.warn('Error fetching tarball:', e);
+        }
+
         // Install dependencies manually
         statusDiv.innerHTML += '<br>Installing dependencies (igraph, ggplot2, dplyr, tibble)...';
         await webR.installPackages(['igraph', 'ggplot2', 'dplyr', 'tibble'], {
@@ -44,21 +56,35 @@ async function initWebR() {
 
         // Install the package
         statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
+        let installSucceeded = false;
         try {
+            console.log('Installing bbnetwebasm from repos', bbnetRepos);
             await webR.installPackages(['bbnetwebasm'], {
                 repos: bbnetRepos
             });
+            installSucceeded = true;
         } catch (err) {
             console.warn('Local repo install failed, falling back to default webR repo', err);
             statusDiv.innerHTML += '<br>Local repo not found; trying public repo...';
-            await webR.installPackages(['bbnetwebasm'], {
-                repos: [defaultWebRRepo]
-            });
+            try {
+                await webR.installPackages(['bbnetwebasm'], {
+                    repos: [defaultWebRRepo]
+                });
+                installSucceeded = true;
+            } catch (err2) {
+                console.error('Install from public repo also failed', err2);
+                statusDiv.innerHTML += '<br>Install from public repo failed: ' + err2.message;
+            }
         }
 
         // Verify install by querying installed packages (helps debug cache issues)
         const installed = await webR.evalR(`as.data.frame(utils::installed.packages()[, c("Package", "Version")])`);
         console.log("Installed packages:", installed);
+        const hasPkg = installed.values.some(row => row[0] === 'bbnetwebasm');
+        if (!hasPkg || !installSucceeded) {
+            statusDiv.innerHTML += '<br>bbnetwebasm not installed; see console for details.';
+            throw new Error('bbnetwebasm not installed');
+        }
 
         // Load the library
         await webR.evalR('library(bbnetwebasm)');
