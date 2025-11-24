@@ -43,6 +43,10 @@ async function initWebR() {
             });
         }
 
+        // Verify install by querying installed packages (helps debug cache issues)
+        const installed = await webR.evalR(`as.data.frame(utils::installed.packages()[, c("Package", "Version")])`);
+        console.log("Installed packages:", installed);
+
         // Load the library
         await webR.evalR('library(bbnetwebasm)');
 

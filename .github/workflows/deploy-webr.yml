@@ -78,6 +78,9 @@ jobs:
       - name: Debug - list webr-app/repo contents
         run: ls -R webr-app/repo
 
+      - name: Disable Jekyll on Pages
+        run: touch webr-app/.nojekyll
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
