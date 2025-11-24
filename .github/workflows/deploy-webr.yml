@@ -119,11 +119,17 @@ jobs:
           message("Contents of rebuilt repo:")
           list.files("webr-app/repo", recursive = TRUE)
           message("Checking PACKAGES for bbnetwebasm:")
-          pkg_file <- file.path("webr-app/repo", "PACKAGES")
-          if (!file.exists(pkg_file)) stop("PACKAGES not found in rebuilt repo")
-          pkg_txt <- readLines(pkg_file)
-          cat(pkg_txt, sep = "\n")
-          if (!any(grepl("^Package: bbnetwebasm$", pkg_txt))) stop("bbnetwebasm not listed in rebuilt repo PACKAGES")
+          pkg_files <- list.files("webr-app/repo", pattern = "^PACKAGES$", recursive = TRUE, full.names = TRUE)
+          print(pkg_files)
+          if (length(pkg_files) == 0) stop("PACKAGES not found in rebuilt repo")
+          for (f in pkg_files) {
+            cat("----", f, "----\n")
+            txt <- readLines(f)
+            cat(txt, sep = "\n")
+            cat("\n")
+          }
+          found <- any(vapply(pkg_files, function(f) any(grepl("^Package: bbnetwebasm$", readLines(f))), logical(1)))
+          if (!found) stop("bbnetwebasm not listed in rebuilt repo PACKAGES")
         shell: Rscript {0}
 
       - name: Disable Jekyll on Pages

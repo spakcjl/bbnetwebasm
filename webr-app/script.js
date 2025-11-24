@@ -22,15 +22,15 @@ async function initWebR() {
         const defaultWebRRepo = 'https://webr.r-wasm.org/latest/';
         const bbnetRepos = [repoURL, defaultWebRRepo];
 
-        // Quick check: try to fetch PACKAGES for diagnostics
+        // Quick check: try to fetch PACKAGES for diagnostics (repo/src/contrib/PACKAGES)
         try {
-            const pkgResp = await fetch(new URL('PACKAGES', repoURL));
+            const pkgResp = await fetch(new URL('src/contrib/PACKAGES', repoURL));
             if (pkgResp.ok) {
                 const pkgTxt = await pkgResp.text();
                 console.log('PACKAGES contents:\n', pkgTxt);
             } else {
                 console.warn('PACKAGES not reachable at', repoURL, pkgResp.status);
-                statusDiv.innerHTML += `<br>PACKAGES not reachable at ${repoURL} (status ${pkgResp.status})`;
+                statusDiv.innerHTML += `<br>PACKAGES not reachable at ${repoURL}src/contrib/PACKAGES (status ${pkgResp.status})`;
             }
         } catch (e) {
             console.warn('Error fetching PACKAGES:', e);
