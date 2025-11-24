@@ -67,6 +67,17 @@ jobs:
           name: wasm-repo
           path: webr-app/repo
 
+      - name: Flatten repo directory
+        run: |
+          shopt -s dotglob
+          if [ -d "webr-app/repo/webr-repo" ]; then
+            mv webr-app/repo/webr-repo/* webr-app/repo/
+            rmdir webr-app/repo/webr-repo
+          fi
+
+      - name: Debug - list webr-app/repo contents
+        run: ls -R webr-app/repo
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
