@@ -20,7 +20,7 @@ async function initWebR() {
         const repoURL = new URL('./repo/', window.location.href).toString();
         console.log('Repo URL:', repoURL);
         const defaultWebRRepo = 'https://webr.r-wasm.org/latest/';
-        const bbnetRepos = [repoURL, defaultWebRRepo];
+        const bbnetRepos = [repoURL]; // prefer local only to avoid 403s from public repo
 
         // Quick check: try to fetch PACKAGES for diagnostics (repo/src/contrib/PACKAGES)
         try {
@@ -56,25 +56,18 @@ async function initWebR() {
 
         // Install the package
         statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
+        // Force source installs from our repo to avoid binary lookup (bin/emscripten/4.4)
         let installSucceeded = false;
         try {
-            console.log('Installing bbnetwebasm from repos', bbnetRepos);
-            await webR.installPackages(['bbnetwebasm'], {
-                repos: bbnetRepos
-            });
+            console.log('Installing bbnetwebasm from source via repos', bbnetRepos);
+            await webR.evalR(`
+              options(pkgType = "source", repos = c("local" = "${repoURL}"))
+              install.packages("bbnetwebasm", type = "source", repos = "${repoURL}", dependencies = TRUE)
+            `);
             installSucceeded = true;
         } catch (err) {
-            console.warn('Local repo install failed, falling back to default webR repo', err);
-            statusDiv.innerHTML += '<br>Local repo not found; trying public repo...';
-            try {
-                await webR.installPackages(['bbnetwebasm'], {
-                    repos: [defaultWebRRepo]
-                });
-                installSucceeded = true;
-            } catch (err2) {
-                console.error('Install from public repo also failed', err2);
-                statusDiv.innerHTML += '<br>Install from public repo failed: ' + err2.message;
-            }
+            console.error('Install from local repo failed', err);
+            statusDiv.innerHTML += '<br>Install from local repo failed: ' + err.message;
         }
 
         // Verify install by attempting to load the package
