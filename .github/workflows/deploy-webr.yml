@@ -37,11 +37,9 @@ jobs:
       - name: Build R package for Wasm
         run: |
           library(rwasm)
-          message("Configuring webR toolchain...")
-          configure_webr(version = "0.4.2")
           # Build the package and add it to the repo (include dependencies)
           message("Building package with dependencies...")
-          res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = TRUE, webr_root = Sys.getenv("WEBR_ROOT"))
+          res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = TRUE)
           print(res)
           
           message("Listing repo content after build:")
@@ -95,46 +93,14 @@ jobs:
       - name: Debug - list webr-app/repo contents
         run: ls -R webr-app/repo
 
-      # Rebuild the wasm repo directly in this job to guarantee presence on Pages
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: '4.3'
-          use-public-rspm: true
-
-      - uses: mymindstorm/setup-emsdk@v14
-        with:
-          version: 3.1.56
-
-      - name: Install dependencies for wasm rebuild
+      - name: Verify PACKAGES in downloaded repo
         run: |
-          install.packages("pak")
-          pak::pkg_install("r-wasm/rwasm")
-        shell: Rscript {0}
-
-      - name: Rebuild wasm repo in webr-app/repo
-        run: |
-          library(rwasm)
-          message("Configuring webR toolchain...")
-          configure_webr(version = "0.4.2")
-          dir.create("webr-app/repo", showWarnings = FALSE, recursive = TRUE)
-          message("Rebuilding package with dependencies into webr-app/repo ...")
-          res <- add_pkg("local::.", repo_dir = "webr-app/repo", dependencies = TRUE, webr_root = Sys.getenv("WEBR_ROOT"))
-          print(res)
-          message("Contents of rebuilt repo:")
-          list.files("webr-app/repo", recursive = TRUE)
-          message("Checking PACKAGES for bbnetwebasm:")
-          pkg_files <- list.files("webr-app/repo", pattern = "^PACKAGES$", recursive = TRUE, full.names = TRUE)
-          print(pkg_files)
-          if (length(pkg_files) == 0) stop("PACKAGES not found in rebuilt repo")
-          for (f in pkg_files) {
-            cat("----", f, "----\n")
-            txt <- readLines(f)
-            cat(txt, sep = "\n")
-            cat("\n")
-          }
-          found <- any(vapply(pkg_files, function(f) any(grepl("^Package: bbnetwebasm$", readLines(f))), logical(1)))
-          if (!found) stop("bbnetwebasm not listed in rebuilt repo PACKAGES")
-        shell: Rscript {0}
+          ls -l webr-app/repo/src/contrib || true
+          if [ ! -f "webr-app/repo/src/contrib/PACKAGES" ]; then
+            echo "PACKAGES missing at webr-app/repo/src/contrib"
+            exit 1
+          fi
+          grep -q "^Package: bbnetwebasm$" webr-app/repo/src/contrib/PACKAGES || { echo "bbnetwebasm not found in PACKAGES"; exit 1; }
 
       - name: Disable Jekyll on Pages
         run: touch webr-app/.nojekyll
