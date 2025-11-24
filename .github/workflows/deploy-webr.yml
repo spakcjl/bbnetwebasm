@@ -31,21 +31,17 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages("pak")
-          # Install dependencies explicitly since we removed them from DESCRIPTION to avoid build errors
-          pak::pkg_install(c("r-wasm/rwasm", "dplyr", "tibble", "igraph", "ggplot2"))
+          pak::pkg_install("r-wasm/rwasm")
         shell: Rscript {0}
 
       - name: Build R package for Wasm
         run: |
           library(rwasm)
           # Build the package and add it to the repo
-          # We build into webr-repo
           message("Building package...")
           tryCatch({
-            # dependencies = FALSE avoids trying to build dependencies (like dplyr) from source/binary
-            # which might be causing the "invalid version specification" error.
-            # We rely on webR to pull standard dependencies from the public repo.
-            res <- add_pkg(".", repo_dir = "webr-repo", dependencies = FALSE)
+            # dependencies = TRUE will build dependencies for Wasm
+            res <- add_pkg("local::.", repo_dir = "webr-repo", dependencies = TRUE)
             print(res)
           }, error = function(e) {
             message("Error adding package: ", e$message)
