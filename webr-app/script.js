@@ -61,8 +61,8 @@ async function initWebR() {
         try {
             console.log('Installing bbnetwebasm as binary from repos', bbnetRepos);
             await webR.evalR(`
-              options(repos = c("local" = "${repoURL}"))
-              install.packages("bbnetwebasm")
+              options(pkgType = "binary", repos = c("local" = "${repoURL}"))
+              install.packages("bbnetwebasm", type = "binary")
             `);
             installSucceeded = true;
         } catch (err) {
