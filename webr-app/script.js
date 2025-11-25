@@ -59,8 +59,10 @@ async function initWebR() {
 
         try {
             console.log('Installing bbnetwebasm from repo', repoURL);
+            // Explicitly set type to 'source' because our repo only has src/contrib, not bin/emscripten
             await webR.installPackages(['bbnetwebasm'], {
-                repos: [repoURL]
+                repos: [repoURL],
+                type: 'source'
             });
         } catch (err) {
             console.error('Install from local repo failed', err);
