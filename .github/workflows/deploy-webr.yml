@@ -24,6 +24,11 @@ jobs:
           r-version: '4.4'
           use-public-rspm: true
 
+      - name: Setup webR toolchain (rwasm)
+        uses: r-wasm/actions/setup-rwasm@v1
+        with:
+          webr-version: "0.4.2"
+
       - name: Install dependencies
         run: |
           install.packages("pak")
@@ -33,11 +38,8 @@ jobs:
       - name: Build R package for Wasm
         run: |
           library(rwasm)
-          # Download and configure webR toolchain
-          webr_root <- rwasm::download_webr(version = "0.4.2")
-          rwasm::use_webr(webr_root)
-          Sys.setenv(WEBR_ROOT = webr_root)
-          Sys.setenv(EMSCRIPTEN_ROOT = file.path(webr_root, "emsdk"))
+          webr_root <- Sys.getenv("WEBR_ROOT")
+          if (webr_root == "") stop("WEBR_ROOT not set after setup-rwasm")
           message("Using WEBR_ROOT: ", webr_root)
           # Build the package and add it to the repo (include dependencies)
           message("Building package with dependencies...")
