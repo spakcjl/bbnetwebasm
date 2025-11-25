@@ -90,9 +90,20 @@ jobs:
       - name: Flatten repo directory
         run: |
           shopt -s dotglob
+          # If the artifact download resulted in a nested 'webr-repo' directory, move its contents up.
           if [ -d "webr-app/repo/webr-repo" ]; then
+            echo "Detected nested 'webr-repo' directory. Moving contents..."
             mv webr-app/repo/webr-repo/* webr-app/repo/
             rmdir webr-app/repo/webr-repo
+          else
+            echo "No nested 'webr-repo' directory found. Structure seems correct."
+          fi
+          
+          # Ensure the 'bin' directory is at the root of 'webr-app/repo'
+          if [ ! -d "webr-app/repo/bin" ]; then
+             echo "Error: 'bin' directory not found in 'webr-app/repo'. Listing contents:"
+             ls -R webr-app/repo
+             exit 1
           fi
 
       - name: Debug - list webr-app/repo contents
