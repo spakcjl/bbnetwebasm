@@ -28,6 +28,11 @@ jobs:
         with:
           version: 3.1.56
 
+      - name: Setup webR toolchain
+        uses: r-wasm/actions/setup-webr@v1
+        with:
+          version: "0.4.2"
+
       - name: Install dependencies
         run: |
           install.packages("pak")
@@ -60,15 +65,8 @@ jobs:
             stop("bbnetwebasm is not present in PACKAGES metadata; build likely failed")
           }
 
-          # Create a pseudo-binary repo for webR (copy no-compiled-code tarballs into bin/emscripten/contrib/4.4)
-          bin_dir <- file.path("webr-repo", "bin", "emscripten", "contrib", "4.4")
-          dir.create(bin_dir, recursive = TRUE, showWarnings = FALSE)
-          src_dir <- file.path("webr-repo", "src", "contrib")
-          src_tgz <- list.files(src_dir, pattern = "\\.tar\\.gz$", full.names = TRUE)
-          file.copy(src_tgz, bin_dir, overwrite = TRUE)
-          tools::write_PACKAGES(bin_dir, type = "binary")
-          message("Binary-like repo contents:")
-          list.files(bin_dir, recursive = TRUE)
+          message("Listing bin/emscripten contents (if any):")
+          list.files(file.path("webr-repo", "bin"), recursive = TRUE)
         shell: Rscript {0}
 
       - name: Debug - List repo contents
@@ -102,15 +100,6 @@ jobs:
 
       - name: Debug - list webr-app/repo contents
         run: ls -R webr-app/repo
-
-      - name: Verify PACKAGES in downloaded repo
-        run: |
-          ls -l webr-app/repo/src/contrib || true
-          if [ ! -f "webr-app/repo/src/contrib/PACKAGES" ]; then
-            echo "PACKAGES missing at webr-app/repo/src/contrib"
-            exit 1
-          fi
-          grep -q "^Package: bbnetwebasm$" webr-app/repo/src/contrib/PACKAGES || { echo "bbnetwebasm not found in PACKAGES"; exit 1; }
 
       - name: Disable Jekyll on Pages
         run: touch webr-app/.nojekyll
