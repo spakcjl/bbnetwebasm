@@ -56,13 +56,12 @@ async function initWebR() {
 
         // Install the package
         statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
-        
+
         try {
             console.log('Installing bbnetwebasm from repo', repoURL);
             await webR.installPackages(['bbnetwebasm'], {
-                repos: [repoURL] 
+                repos: [repoURL]
             });
-            installSucceeded = true;
         } catch (err) {
             console.error('Install from local repo failed', err);
             statusDiv.innerHTML += '<br>Install from local repo failed: ' + err.message;
