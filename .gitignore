@@ -2,3 +2,8 @@ inst/doc
 .Rproj.user
 .Rhistory
 .DS_Store
+# gemini-cli settings
+.gemini/
+
+# GitHub App credentials
+gha-creds-*.json
