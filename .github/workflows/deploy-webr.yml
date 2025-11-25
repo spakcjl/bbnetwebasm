@@ -99,9 +99,9 @@ jobs:
             echo "No nested 'webr-repo' directory found. Structure seems correct."
           fi
           
-          # Ensure the 'bin' directory is at the root of 'webr-app/repo'
-          if [ ! -d "webr-app/repo/bin" ]; then
-             echo "Error: 'bin' directory not found in 'webr-app/repo'. Listing contents:"
+          # Ensure the 'src/contrib' directory exists, which contains the package tarballs
+          if [ ! -d "webr-app/repo/src/contrib" ]; then
+             echo "Error: 'src/contrib' directory not found in 'webr-app/repo'. Listing contents:"
              ls -R webr-app/repo
              exit 1
           fi
