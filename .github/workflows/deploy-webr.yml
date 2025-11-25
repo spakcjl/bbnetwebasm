@@ -28,10 +28,7 @@ jobs:
         with:
           version: 3.1.56
 
-      - name: Setup webR toolchain
-        uses: r-wasm/actions/setup-webr@v1
-        with:
-          version: "0.4.2"
+
 
       - name: Install dependencies
         run: |
