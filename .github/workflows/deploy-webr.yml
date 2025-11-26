@@ -25,84 +25,33 @@ jobs:
           r-version: '4.4'
           use-public-rspm: true
 
-      - name: Resolve Dependencies
+      - name: Install Dependencies
         run: |
           install.packages("pak", repos = "https://r-lib.github.io/p/pak/devel/")
           
-          dir.create("deps_tarballs", showWarnings = FALSE)
+          # Install rwasm from GitHub
+          pak::pkg_install("r-wasm/rwasm")
           
-          # Get all dependencies
-          deps <- pak::pkg_deps(".", dependencies = TRUE)
-          pkgs <- deps$package
-          
-          # Build adjacency list for identified deps
-          adj <- setNames(lapply(deps$deps, function(x) {
-            if (is.null(x) || nrow(x) == 0) return(character(0))
-            intersect(x$package, pkgs)
-          }), pkgs)
-          
-          # Ensure cpp11 is in the list (it is a build dep of igraph/rigraph)
-          if (!"cpp11" %in% pkgs) {
-             pkgs <- c(pkgs, "cpp11")
-             adj[["cpp11"]] <- character(0)
-          }
-          
-          # Manually enforce dependency: igraph depends on cpp11
-          # This ensures topological sort places cpp11 BEFORE igraph
-          if ("igraph" %in% names(adj)) {
-             adj[["igraph"]] <- unique(c(adj[["igraph"]], "cpp11"))
-          }
-          
-          sorted <- character(0)
-          visited <- new.env(parent = emptyenv())
-          
-          visit <- function(n) {
-            if (exists(n, envir = visited)) return()
-            assign(n, TRUE, envir = visited)
-            children <- adj[[n]]
-            for (child in children) visit(child)
-            sorted <<- c(sorted, n)
-          }
-          
-          for (p in pkgs) visit(p)
-          
-          pkg_list <- sorted
-          pkg_list <- pkg_list[pkg_list != "bbnetwebasm"]
-          base_pkgs <- installed.packages(priority = "base")[, "Package"]
-          pkg_list <- pkg_list[!pkg_list %in% base_pkgs]
-          
-          # Manually download specific packages to avoid build/download errors
-          # igraph: avoids rwasm rigraph zipball error
-          # cpp11: ensures availability
-          manual_pkgs <- c("igraph", "cpp11")
-          
-          for (pkg in manual_pkgs) {
-            if (pkg %in% pkg_list) {
-              message("Downloading source for: ", pkg)
-              # Download to deps_tarballs
-              dl <- download.packages(pkg, destdir = "deps_tarballs", type = "source", repos = "https://cloud.r-project.org")
-              # Replace package name in list with file path, prefixed with local::
-              pkg_path <- dl[1, 2]
-              pkg_list[pkg_list == pkg] <- paste0("local::", pkg_path)
-            }
-          }
-          
-          # Explicitly add the local package at the end
-          pkg_list <- c(pkg_list, ".")
-          
-          cat("Identified dependencies (ordered):\n")
-          print(pkg_list)
-          
-          cat("PKG_LIST<<EOF\n", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
-          cat(pkg_list, sep = "\n", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
-          cat("EOF\n", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+          # Install dependencies of the local package (standard Linux binaries)
+          # This satisfies the build-time checks for bbnetwebasm
+          pak::pkg_install(".", dependencies = TRUE)
         shell: Rscript {0}
 
-      - name: Build R package for Wasm
-        uses: r-wasm/actions/build-rwasm@v1
-        with:
-          packages: ${{ env.PKG_LIST }}
-          repo-path: "webr-repo"
+      - name: Setup Emscripten
+        run: |
+          library(rwasm)
+          message("Installing EMSDK...")
+          install_emsdk()
+        shell: Rscript {0}
+
+      - name: Build WASM Package
+        run: |
+          library(rwasm)
+          # Build only the local package. Dependencies are assumed to be in the public repo (at runtime)
+          # or satisfied by the Linux binaries (at build time).
+          message("Building bbnetwebasm for WASM...")
+          add_pkg(".", repo_dir = "webr-repo")
+        shell: Rscript {0}
 
       - name: Verify Wasm Build
         run: |
