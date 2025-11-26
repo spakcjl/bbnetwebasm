@@ -38,10 +38,10 @@ jobs:
               options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/latest'));
               install.packages('pak');
               install.packages('roxygen2');
-              roxygen2::roxygenize('.');
-              # Install dependencies as binaries
+              # Install dependencies as binaries BEFORE roxygenizing (as roxygen loads the package)
               pak::pkg_install('.', dependencies = TRUE);
-              # Build the wasm package using the pre-configured environment
+              roxygen2::roxygenize('.');
+              # Build the wasm package
               library(rwasm);
               add_pkg('.', repo_dir = 'webr-repo');
             "
