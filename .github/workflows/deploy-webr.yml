@@ -1,3 +1,5 @@
+# Workflow to build and deploy the webR application to GitHub Pages.
+
 name: Deploy webR App
 
 on:
