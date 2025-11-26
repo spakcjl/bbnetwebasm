@@ -132,20 +132,24 @@ async function executeR(code) {
     try {
         if (!shelter) shelter = await new webR.Shelter();
 
-        // Open graphics device
-        term.writeln('\x1b[90m> [Debug] Opening graphics device...\x1b[0m');
-        await webR.evalR('png("/tmp/plot.png", width=800, height=600, res=150)');
+        term.writeln('\x1b[90m> [Debug] Executing wrapped code...\x1b[0m');
+
+        // Wrap user code to capture plot
+        const fullCode = `
+            png("/tmp/plot.png", width=800, height=600, res=150)
+            tryCatch({
+                ${code}
+            }, finally = {
+                dev.off()
+            })
+        `;
 
         // Execute User Code
-        const result = await shelter.captureR(code, {
+        const result = await shelter.captureR(fullCode, {
             withAutoprint: true,
             captureStreams: true,
             captureConditions: true
         });
-
-        // Close device to flush plot
-        await webR.evalR('dev.off()');
-        term.writeln('\x1b[90m> [Debug] Device closed.\x1b[0m');
 
         result.output.forEach(line => {
             if (line.type === 'stdout') {
