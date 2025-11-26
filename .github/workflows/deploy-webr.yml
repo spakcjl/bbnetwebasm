@@ -40,9 +40,13 @@ jobs:
 
       - name: Setup Emscripten
         run: |
+          .libPaths()
           library(rwasm)
+          message("Exported functions in rwasm:")
+          print(ls("package:rwasm"))
+          
           message("Installing EMSDK...")
-          install_emsdk()
+          rwasm::install_emsdk()
         shell: Rscript {0}
 
       - name: Build WASM Package
