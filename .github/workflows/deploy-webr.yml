@@ -25,16 +25,16 @@ jobs:
           r-version: '4.4'
           use-public-rspm: true
 
-      - name: Install Dependencies
-        run: |
-          install.packages("pak", repos = "https://r-lib.github.io/p/pak/devel/")
-          
-          # Install rwasm from GitHub
-          pak::pkg_install("r-wasm/rwasm")
-          
-          # Install dependencies of the local package (standard Linux binaries)
-          # This satisfies the build-time checks for bbnetwebasm
-          pak::pkg_install(".", dependencies = TRUE)
+      - name: Install pak
+        run: install.packages("pak", repos = "https://r-lib.github.io/p/pak/devel/")
+        shell: Rscript {0}
+
+      - name: Install rwasm
+        run: pak::pkg_install("r-wasm/rwasm")
+        shell: Rscript {0}
+
+      - name: Install Local Dependencies
+        run: pak::pkg_install(".", dependencies = TRUE)
         shell: Rscript {0}
 
       - name: Setup Emscripten
