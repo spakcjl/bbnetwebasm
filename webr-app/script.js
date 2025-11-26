@@ -16,8 +16,8 @@ const tourSteps = [
     { label: "Setup", code: 'data(my_network); data(my_BBN); data(dogwhelk);' },
     { label: "Sphere Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_on_sphere)' },
     { label: "Grid Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_on_grid)' },
-    { label: "Circle Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_circle)' },
-    { label: "Random Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_random)' },
+    { label: "Circle Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_in_circle)' },
+    { label: "Random Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_randomly)' },
     { label: "Time Series", code: 'bbn.timeseries(bbn.model = my_BBN, priors1 = dogwhelk, timesteps = 6, disturbance = 1)' }
 ];
 
