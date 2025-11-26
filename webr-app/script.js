@@ -94,8 +94,7 @@ runButton.onclick = async () => {
               bbn.network = my_network, 
               font.size = 0.7,
               arrow.size = 4, 
-              arrange = "dot", 
-              palette = "classic"
+              arrange = igraph::layout_on_sphere
             )
             dev.off()
             print("Network diagram generated!")
