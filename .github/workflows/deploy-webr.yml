@@ -75,9 +75,9 @@ jobs:
               message("Downloading source for: ", pkg)
               # Download to deps_tarballs
               dl <- download.packages(pkg, destdir = "deps_tarballs", type = "source", repos = "https://cloud.r-project.org")
-              # Replace package name in list with file path
+              # Replace package name in list with file path, prefixed with local::
               pkg_path <- dl[1, 2]
-              pkg_list[pkg_list == pkg] <- pkg_path
+              pkg_list[pkg_list == pkg] <- paste0("local::", pkg_path)
             }
           }
           
