@@ -42,6 +42,13 @@ jobs:
           # build-rwasm usually handles order, but let's just pass the set.
           # We explicitly add "." for the local package.
           pkg_list <- pkg_list[pkg_list != "bbnetwebasm"]
+          
+          # WORKAROUND: Force CRAN version of igraph to avoid tar/zip errors with rigraph
+          # We only need it for build-time checks; runtime uses the public webR binary.
+          if ("igraph" %in% pkg_list) {
+            pkg_list[pkg_list == "igraph"] <- "cran::igraph"
+          }
+          
           pkg_list <- c(pkg_list, ".")
           
           cat("Identified dependencies:\n")
