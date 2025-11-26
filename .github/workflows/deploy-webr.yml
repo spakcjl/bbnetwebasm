@@ -35,6 +35,8 @@ jobs:
             Rscript -e "
               options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/latest'));
               install.packages('pak');
+              install.packages('roxygen2');
+              roxygen2::roxygenize('.');
               # Install dependencies as binaries
               pak::pkg_install('.', dependencies = TRUE);
               # Build the wasm package using the pre-configured environment
