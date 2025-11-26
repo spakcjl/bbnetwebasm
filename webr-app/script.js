@@ -133,6 +133,7 @@ async function executeR(code) {
         if (!shelter) shelter = await new webR.Shelter();
 
         // Open graphics device
+        term.writeln('\x1b[90m> [Debug] Opening graphics device...\x1b[0m');
         await webR.evalR('png("/tmp/plot.png", width=800, height=600, res=150)');
 
         // Execute User Code
@@ -144,6 +145,7 @@ async function executeR(code) {
 
         // Close device to flush plot
         await webR.evalR('dev.off()');
+        term.writeln('\x1b[90m> [Debug] Device closed.\x1b[0m');
 
         result.output.forEach(line => {
             if (line.type === 'stdout') {
@@ -156,6 +158,8 @@ async function executeR(code) {
         // Handle Plot
         try {
             const plotData = await webR.FS.readFile('/tmp/plot.png');
+            term.writeln(`\x1b[90m> [Debug] Plot file found. Size: ${plotData.length} bytes.\x1b[0m`);
+            
             // Check if it's a valid non-empty image (PNG header usually)
             if (plotData.length > 0) {
                 const blob = new Blob([plotData], { type: 'image/png' });
@@ -165,10 +169,12 @@ async function executeR(code) {
                 const img = document.createElement('img');
                 img.src = url;
                 plotOutput.appendChild(img);
+                plotOutput.style.display = 'flex'; // Force visible
             }
             // Cleanup? Maybe keep for history or debug.
         } catch (e) {
             // No plot file created (normal for non-plotting code)
+            term.writeln('\x1b[90m> [Debug] No plot generated.\x1b[0m');
         }
 
     } catch (e) {
