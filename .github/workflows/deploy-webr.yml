@@ -113,6 +113,28 @@ jobs:
              exit 1
           fi
 
+      - name: Inject version info into index.html
+        run: |
+          # Get commit info
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          
+          # Sanitize commit message for HTML (basic) and sed
+          # Remove quotes and backslashes to prevent breaking the command or HTML
+          SAFE_MSG=$(echo "$COMMIT_MSG" | tr -d '"\\`')
+          
+          echo "Injecting version: $SHORT_SHA - $SAFE_MSG"
+          
+          # Replace visible version text
+          # Using | as delimiter to avoid conflict with slashes in message
+          sed -i "s|App Version: 13|Version: $SHORT_SHA - $SAFE_MSG|" webr-app/index.html
+          
+          # Update cache buster
+          sed -i "s|\?v=13|?v=$SHORT_SHA|" webr-app/index.html
+          
+          # Verify change
+          grep "Version:" webr-app/index.html
+
       - name: Debug - list webr-app/repo contents
         run: ls -R webr-app/repo
 
