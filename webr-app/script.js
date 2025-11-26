@@ -132,14 +132,18 @@ async function executeR(code) {
     try {
         if (!shelter) shelter = await new webR.Shelter();
 
-        // Clear previous plot (optional, mimicking RStudio)
-        // plotOutput.innerHTML = ''; 
+        // Open graphics device
+        await webR.evalR('png("/tmp/plot.png", width=800, height=600, res=150)');
 
+        // Execute User Code
         const result = await shelter.captureR(code, {
             withAutoprint: true,
             captureStreams: true,
             captureConditions: true
         });
+
+        // Close device to flush plot
+        await webR.evalR('dev.off()');
 
         result.output.forEach(line => {
             if (line.type === 'stdout') {
@@ -150,35 +154,29 @@ async function executeR(code) {
         });
 
         // Handle Plot
-        // WebR plots are usually saved to the VFS. 
-        // Since we rely on `dev.off()` in the user code creating a file (like in the original demo),
-        // we need to check for that file OR setup a canvas device.
-        // Ideally, we intercept the plot. 
-        // For this prototype, we check for /tmp/plot.png if the code creates it.
         try {
-            // Check if the code mentions plot.png or if we should just check existence
-            // A robust way is complex. For now, assume the demo code convention.
             const plotData = await webR.FS.readFile('/tmp/plot.png');
-            const blob = new Blob([plotData], { type: 'image/png' });
-            const url = URL.createObjectURL(blob);
-            
-            plotOutput.innerHTML = ''; // Clear old
-            const img = document.createElement('img');
-            img.src = url;
-            plotOutput.appendChild(img);
-            
-            // Clean up file to avoid showing old plot next time if no new one generated?
-            // await webR.FS.unlink('/tmp/plot.png'); 
+            // Check if it's a valid non-empty image (PNG header usually)
+            if (plotData.length > 0) {
+                const blob = new Blob([plotData], { type: 'image/png' });
+                const url = URL.createObjectURL(blob);
+                
+                plotOutput.innerHTML = ''; 
+                const img = document.createElement('img');
+                img.src = url;
+                plotOutput.appendChild(img);
+            }
+            // Cleanup? Maybe keep for history or debug.
         } catch (e) {
-            // No plot generated or file not found, ignore
+            // No plot file created (normal for non-plotting code)
         }
 
     } catch (e) {
         term.writeln(`\x1b[31mError: ${e.message}\x1b[0m`);
+        // Try to close device if code failed
+        try { await webR.evalR('dev.off()'); } catch (e2) {} 
     } finally {
-        // shelter.purge(); // Keeping variables alive in session? 
-        // If we purge, variables are lost. IDE usually keeps session.
-        // So DO NOT purge if we want a REPL experience.
+        // shelter.purge(); 
     }
 }
 
