@@ -3,33 +3,47 @@ import { Terminal } from 'https://cdn.jsdelivr.net/npm/xterm@5.3.0/+esm';
 import { FitAddon } from 'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/+esm';
 
 const statusDiv = document.getElementById('status');
-const runButton = document.getElementById('run-button');
-const consoleOutput = document.getElementById('console-output');
+const runCodeBtn = document.getElementById('run-code-btn');
 const plotOutput = document.getElementById('plot-output');
 
 let webR;
 let shelter;
+let editor;
 
-// Terminal Setup
+// --- Layout & Terminal Setup ---
+
+// Split Panes
+Split(['#source-pane', '#console-pane'], {
+    sizes: [50, 50],
+    minSize: 200,
+    gutterSize: 10,
+    onDragEnd: () => fitAddon.fit()
+});
+
+// Terminal
 const term = new Terminal({
     cursorBlink: true,
     theme: {
         background: '#2d2d2d',
         foreground: '#f8f8f2'
-    }
+    },
+    fontSize: 14,
+    fontFamily: 'Menlo, Monaco, "Courier New", monospace'
 });
 const fitAddon = new FitAddon();
 term.loadAddon(fitAddon);
 term.open(document.getElementById('terminal'));
 fitAddon.fit();
 
+// Resize terminal on window resize
+window.addEventListener('resize', () => fitAddon.fit());
+
 let currentLine = '';
 
-term.writeln('\x1b[1;32mWelcome to the bbnetwebasm R Terminal!\x1b[0m');
-term.writeln('Type R code and press Enter to run.');
+term.writeln('\x1b[1;34mR WebConsole initialized.\x1b[0m');
 term.write('\r\n> ');
 
-// Simple REPL Input Handler
+// Terminal Input Handler
 term.onData(e => {
     switch (e) {
         case '\r': // Enter
@@ -44,7 +58,6 @@ term.onData(e => {
             }
             break;
         default: // Typing
-            // Basic filter to avoid control characters breaking things
             if (e >= ' ' && e <= '~') {
                 currentLine += e;
                 term.write(e);
@@ -52,22 +65,76 @@ term.onData(e => {
     }
 });
 
+// --- Monaco Editor Setup ---
+
+require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+
+require(['vs/editor/editor.main'], function() {
+    editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+        value: [
+            "# Welcome to bbnetwebasm IDE",
+            "library(bbnetwebasm)",
+            "data(my_network)",
+            "",
+            "# Plot the network",
+            "bbn.network.diagram(",
+            "  bbn.network = my_network,",
+            "  font.size = 0.7,",
+            "  arrow.size = 4,",
+            "  arrange = igraph::layout_on_sphere",
+            ")",
+            "",
+            "# Check console for output"
+        ].join('\n'),
+        language: 'r',
+        theme: 'vs-light',
+        automaticLayout: true,
+        minimap: { enabled: false }
+    });
+
+    // Ctrl+Enter to run
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runEditorCode);
+});
+
+// --- Execution Logic ---
+
 async function runTerminalCommand(code) {
     if (!code.trim()) {
         term.write('> ');
         return;
     }
+    await executeR(code);
+    term.write('> ');
+}
 
+async function runEditorCode() {
+    if (!editor || !webR) return;
+    
+    // Get selected text or full text
+    const selection = editor.getModel().getValueInRange(editor.getSelection());
+    const code = selection || editor.getValue();
+    
+    if (!code.trim()) return;
+
+    // Echo to terminal
+    term.writeln(`\x1b[32m> [Run] Executing code...\x1b[0m`);
+    
+    await executeR(code);
+    term.write('> ');
+}
+
+async function executeR(code) {
     if (!webR) {
-        term.writeln('\x1b[31mWebR not ready yet.\x1b[0m');
-        term.write('> ');
+        term.writeln('\x1b[31mWebR not ready.\x1b[0m');
         return;
     }
 
     try {
         if (!shelter) shelter = await new webR.Shelter();
-        
-        // Capture output
+
+        // Clear previous plot (optional, mimicking RStudio)
+        // plotOutput.innerHTML = ''; 
+
         const result = await shelter.captureR(code, {
             withAutoprint: true,
             captureStreams: true,
@@ -78,20 +145,46 @@ async function runTerminalCommand(code) {
             if (line.type === 'stdout') {
                 term.writeln(line.data);
             } else if (line.type === 'stderr') {
-                term.writeln(`\x1b[31m${line.data}\x1b[0m`); // Red for stderr
+                term.writeln(`\x1b[31m${line.data}\x1b[0m`);
             }
         });
-        
-        // Handle plots if any (rudimentary check)
-        // In a real console, plots are harder to inline. 
-        // We could check if a plot was generated in /tmp/Rtmp... and display it in the plot area.
-        
+
+        // Handle Plot
+        // WebR plots are usually saved to the VFS. 
+        // Since we rely on `dev.off()` in the user code creating a file (like in the original demo),
+        // we need to check for that file OR setup a canvas device.
+        // Ideally, we intercept the plot. 
+        // For this prototype, we check for /tmp/plot.png if the code creates it.
+        try {
+            // Check if the code mentions plot.png or if we should just check existence
+            // A robust way is complex. For now, assume the demo code convention.
+            const plotData = await webR.FS.readFile('/tmp/plot.png');
+            const blob = new Blob([plotData], { type: 'image/png' });
+            const url = URL.createObjectURL(blob);
+            
+            plotOutput.innerHTML = ''; // Clear old
+            const img = document.createElement('img');
+            img.src = url;
+            plotOutput.appendChild(img);
+            
+            // Clean up file to avoid showing old plot next time if no new one generated?
+            // await webR.FS.unlink('/tmp/plot.png'); 
+        } catch (e) {
+            // No plot generated or file not found, ignore
+        }
+
     } catch (e) {
         term.writeln(`\x1b[31mError: ${e.message}\x1b[0m`);
     } finally {
-        term.write('> ');
+        // shelter.purge(); // Keeping variables alive in session? 
+        // If we purge, variables are lost. IDE usually keeps session.
+        // So DO NOT purge if we want a REPL experience.
     }
 }
+
+runCodeBtn.onclick = runEditorCode;
+
+// --- WebR Initialization ---
 
 async function initWebR() {
     statusDiv.textContent = 'Initializing webR...';
@@ -102,123 +195,29 @@ async function initWebR() {
 
         statusDiv.textContent = 'Installing bbnetwebasm...';
 
-        // Construct absolute URL for the repo (ensure trailing slash)
         const repoURL = new URL('./repo/', window.location.href).toString();
-        console.log('Repo URL:', repoURL);
-        const defaultWebRRepo = 'https://webr.r-wasm.org/latest/';
-        const bbnetRepos = [repoURL]; // prefer local only to avoid 403s from public repo
-
-        // Quick check: try to fetch PACKAGES for diagnostics (repo/src/contrib/PACKAGES)
-        try {
-            const pkgResp = await fetch(new URL('src/contrib/PACKAGES', repoURL));
-            if (pkgResp.ok) {
-                const pkgTxt = await pkgResp.text();
-                console.log('PACKAGES contents:\n', pkgTxt);
-            } else {
-                console.warn('PACKAGES not reachable at', repoURL, pkgResp.status);
-                statusDiv.innerHTML += `<br>PACKAGES not reachable at ${repoURL}src/contrib/PACKAGES (status ${pkgResp.status})`;
-            }
-        } catch (e) {
-            console.warn('Error fetching PACKAGES:', e);
-        }
-
-        // Install the package and dependencies
-        statusDiv.innerHTML += '<br>Installing bbnetwebasm and dependencies...';
-
-        try {
-            console.log('Installing bbnetwebasm from repo', repoURL);
-            // We provide both our local repo and the public webR repo.
-            // This allows webR to find our package locally and resolve dependencies from the public repo.
-            await webR.installPackages(['bbnetwebasm'], {
-                repos: [repoURL, 'https://repo.r-wasm.org/']
-            });
-        } catch (err) {
-            console.error('Install failed', err);
-            statusDiv.innerHTML += '<br>Install failed: ' + err.message;
-        }
-
-        // Verify install by attempting to load the package
-        try {
-            await webR.evalR('library(bbnetwebasm)');
-            console.log('bbnetwebasm loaded successfully.');
-        } catch (e) {
-            console.error('Failed to load bbnetwebasm after install:', e);
-            statusDiv.innerHTML += '<br>bbnetwebasm not installed; see console for details.';
-            throw e;
-        }
+        
+        await webR.installPackages(['bbnetwebasm'], {
+            repos: [repoURL, 'https://repo.r-wasm.org/']
+        });
 
         // Load the library
         await webR.evalR('library(bbnetwebasm)');
 
-        statusDiv.textContent = 'Ready!';
+        statusDiv.textContent = 'Ready';
         statusDiv.style.backgroundColor = '#d4edda';
         statusDiv.style.color = '#155724';
-        runButton.disabled = false;
+        runCodeBtn.disabled = false;
+        term.writeln('\x1b[32mWebR Ready! bbnetwebasm loaded.\x1b[0m');
+        term.write('> ');
 
     } catch (error) {
         console.error('Error initializing webR:', error);
-        statusDiv.innerHTML += '<br>Error: ' + error.message;
+        statusDiv.innerHTML = 'Error: ' + error.message;
         statusDiv.style.backgroundColor = '#f8d7da';
         statusDiv.style.color = '#721c24';
+        term.writeln(`\x1b[31mWebR Init Failed: ${error.message}\x1b[0m`);
     }
 }
-
-runButton.onclick = async () => {
-    runButton.disabled = true;
-    statusDiv.textContent = 'Running demo...';
-    consoleOutput.textContent = '';
-    plotOutput.innerHTML = '';
-
-    try {
-        const shelter = await new webR.Shelter();
-
-        // Run a simple demo: load data and plot
-        const code = `
-            data(my_network)
-            png("/tmp/plot.png", width=800, height=800, res=150)
-            bbn.network.diagram(
-              bbn.network = my_network, 
-              font.size = 0.7,
-              arrow.size = 4, 
-              arrange = igraph::layout_on_sphere
-            )
-            dev.off()
-            print("Network diagram generated!")
-        `;
-
-        const result = await shelter.captureR(code, {
-            withAutoprint: true,
-            captureStreams: true,
-            captureConditions: true
-        });
-
-        // Display text output
-        result.output.forEach(line => {
-            if (line.type === 'stdout' || line.type === 'stderr') {
-                consoleOutput.textContent += line.data + '\n';
-            }
-        });
-
-        // Display plot
-        try {
-            const plotData = await webR.FS.readFile('/tmp/plot.png');
-            const blob = new Blob([plotData], { type: 'image/png' });
-            const url = URL.createObjectURL(blob);
-            const img = document.createElement('img');
-            img.src = url;
-            plotOutput.appendChild(img);
-        } catch (e) {
-            console.log('No plot generated');
-        }
-
-        shelter.purge();
-        statusDiv.textContent = 'Done!';
-    } catch (error) {
-        consoleOutput.textContent += '\nError: ' + error.message;
-        statusDiv.textContent = 'Error running code';
-    } finally {
-        runButton.disabled = false;
-    }
-};
 
 initWebR();

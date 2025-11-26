@@ -4,31 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>bbnetwebasm Mobile</title>
+    <title>bbnetwebasm IDE</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <!-- Split.js is logic only, CSS handles layout -->
+    <script src="https://unpkg.com/split.js/dist/split.min.js"></script>
+    <!-- Monaco Editor loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 </head>
 
 <body>
-    <div class="container">
-        <h1>bbnetwebasm</h1>
+    <div class="navbar">
+        <h1>bbnetwebasm IDE</h1>
         <div id="status" class="status">Initializing...</div>
+    </div>
 
-        <div class="controls">
-            <button id="run-button" disabled>Run Demo</button>
+    <div id="ide-container">
+        <div id="source-pane">
+            <div class="toolbar">
+                <button id="run-code-btn" disabled>Run Code (Ctrl+Enter)</button>
+            </div>
+            <div id="monaco-editor"></div>
         </div>
-
-        <div id="output-area">
+        <div id="console-pane">
             <div id="plot-output"></div>
-            <pre id="console-output"></pre>
+            <div id="terminal-container">
+                <div id="terminal"></div>
+            </div>
         </div>
-
-        <h2>Interactive Console</h2>
-        <div id="terminal"></div>
     </div>
-    <div id="version" style="text-align: center; font-size: 0.8rem; color: #666; margin-top: 10px;">App Version: 13</div>
-    </div>
+    
+    <div id="version">App Version: 13</div>
     <script type="module" src="script.js?v=13"></script>
 </body>
-
 </html>
