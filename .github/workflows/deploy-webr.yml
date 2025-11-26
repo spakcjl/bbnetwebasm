@@ -29,18 +29,42 @@ jobs:
         run: |
           install.packages("pak", repos = "https://r-lib.github.io/p/pak/devel/")
           
-          # Use pak to get a topologically sorted installation plan
-          prop <- pak::new_pkg_installation_proposal(".", dependency = TRUE)
-          prop$resolve()
-          prop$solve()
+          # Get all dependencies
+          deps <- pak::pkg_deps(".", dependencies = TRUE)
+          pkgs <- deps$package
           
-          sol <- prop$get_solution()$data
-          # The solution is usually ordered by installation order
+          # Build adjacency list (Package -> Depends On)
+          # deps$deps is a list of data frames. We want the 'package' column from each.
+          adj <- setNames(lapply(deps$deps, function(x) {
+            if (is.null(x) || nrow(x) == 0) return(character(0))
+            intersect(x$package, pkgs)
+          }), pkgs)
+          
+          sorted <- character(0)
+          visited <- new.env(parent = emptyenv())
+          
+          visit <- function(n) {
+            if (exists(n, envir = visited)) return()
+            assign(n, TRUE, envir = visited)
+            
+            # Visit dependencies first
+            children <- adj[[n]]
+            for (child in children) {
+              visit(child)
+            }
+            # Add to sorted list after dependencies are processed
+            sorted <<- c(sorted, n)
+          }
+          
+          # Perform sort
+          for (p in pkgs) {
+            visit(p)
+          }
+          
+          pkg_list <- sorted
           
           # Filter out the source package itself (it will be built last by the action logic)
-          # "source" type usually indicates the local package in this context
-          # But checking name is safer.
-          pkg_list <- sol$package[sol$package != "bbnetwebasm"]
+          pkg_list <- pkg_list[pkg_list != "bbnetwebasm"]
           
           # Filter out base/recommended packages that are pre-installed
           base_pkgs <- installed.packages(priority = "base")[, "Package"]
