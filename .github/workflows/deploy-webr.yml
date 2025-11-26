@@ -29,16 +29,26 @@ jobs:
         run: |
           install.packages("pak", repos = "https://r-lib.github.io/p/pak/devel/")
           
+          dir.create("deps_tarballs", showWarnings = FALSE)
+          
           # Get all dependencies
           deps <- pak::pkg_deps(".", dependencies = TRUE)
           pkgs <- deps$package
           
-          # Build adjacency list (Package -> Depends On)
-          # deps$deps is a list of data frames. We want the 'package' column from each.
+          # Ensure cpp11 is in the list (it is a build dep of igraph/rigraph)
+          if (!"cpp11" %in% pkgs) {
+             pkgs <- c(pkgs, "cpp11")
+             # Re-resolve deps for cpp11 if needed, but it has none usually.
+          }
+
+          # Build adjacency list
           adj <- setNames(lapply(deps$deps, function(x) {
             if (is.null(x) || nrow(x) == 0) return(character(0))
             intersect(x$package, pkgs)
           }), pkgs)
+          
+          # Manual adjacency for cpp11 if it was added manually
+          if (is.null(adj[["cpp11"]])) adj[["cpp11"]] <- character(0)
           
           sorted <- character(0)
           visited <- new.env(parent = emptyenv())
@@ -46,33 +56,32 @@ jobs:
           visit <- function(n) {
             if (exists(n, envir = visited)) return()
             assign(n, TRUE, envir = visited)
-            
-            # Visit dependencies first
             children <- adj[[n]]
-            for (child in children) {
-              visit(child)
-            }
-            # Add to sorted list after dependencies are processed
+            for (child in children) visit(child)
             sorted <<- c(sorted, n)
           }
           
-          # Perform sort
-          for (p in pkgs) {
-            visit(p)
-          }
+          for (p in pkgs) visit(p)
           
           pkg_list <- sorted
-          
-          # Filter out the source package itself (it will be built last by the action logic)
           pkg_list <- pkg_list[pkg_list != "bbnetwebasm"]
-          
-          # Filter out base/recommended packages that are pre-installed
           base_pkgs <- installed.packages(priority = "base")[, "Package"]
           pkg_list <- pkg_list[!pkg_list %in% base_pkgs]
           
-          # WORKAROUND: Force CRAN version of igraph to avoid tar/zip errors with rigraph
-          if ("igraph" %in% pkg_list) {
-            pkg_list[pkg_list == "igraph"] <- "cran::igraph"
+          # Manually download specific packages to avoid build/download errors
+          # igraph: avoids rwasm rigraph zipball error
+          # cpp11: ensures availability
+          manual_pkgs <- c("igraph", "cpp11")
+          
+          for (pkg in manual_pkgs) {
+            if (pkg %in% pkg_list) {
+              message("Downloading source for: ", pkg)
+              # Download to deps_tarballs
+              dl <- download.packages(pkg, destdir = "deps_tarballs", type = "source", repos = "https://cloud.r-project.org")
+              # Replace package name in list with file path
+              pkg_path <- dl[1, 2]
+              pkg_list[pkg_list == pkg] <- pkg_path
+            }
           }
           
           # Explicitly add the local package at the end
