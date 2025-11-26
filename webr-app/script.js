@@ -44,7 +44,7 @@ async function initWebR() {
             // We provide both our local repo and the public webR repo.
             // This allows webR to find our package locally and resolve dependencies from the public repo.
             await webR.installPackages(['bbnetwebasm'], {
-                repos: [repoURL, 'https://webr.r-wasm.org/latest/']
+                repos: [repoURL, 'https://repo.r-wasm.org/']
             });
         } catch (err) {
             console.error('Install failed', err);
