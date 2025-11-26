@@ -20,43 +20,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: '4.4'
-          use-public-rspm: true
-
-      - name: Install System Dependencies
+      - name: Build with Docker
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
-        shell: bash
-
-      - name: Install R Packages
-        run: |
-          install.packages("remotes")
-          remotes::install_github("r-wasm/rwasm")
-          remotes::install_deps(".", dependencies = TRUE)
-        shell: Rscript {0}
-
-      - name: Setup Emscripten
-        run: |
-          .libPaths()
-          library(rwasm)
-          message("Exported functions in rwasm:")
-          print(ls("package:rwasm"))
-          
-          message("Installing EMSDK...")
-          rwasm::install_emsdk()
-        shell: Rscript {0}
-
-      - name: Build WASM Package
-        run: |
-          library(rwasm)
-          # Build only the local package. Dependencies are assumed to be in the public repo (at runtime)
-          # or satisfied by the Linux binaries (at build time).
-          message("Building bbnetwebasm for WASM...")
-          add_pkg(".", repo_dir = "webr-repo")
-        shell: Rscript {0}
+          docker run --rm \
+            -v "$(pwd):/github/workspace" \
+            --workdir "/github/workspace" \
+            -e GITHUB_PAT=${{ secrets.GITHUB_TOKEN }} \
+            ghcr.io/r-wasm/webr:main \
+            Rscript -e "
+              options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/latest'));
+              install.packages('pak');
+              # Install dependencies as binaries
+              pak::pkg_install('.', dependencies = TRUE);
+              # Build the wasm package using the pre-configured environment
+              library(rwasm);
+              add_pkg('.', repo_dir = 'webr-repo');
+            "
 
       - name: Verify Wasm Build
         run: |
