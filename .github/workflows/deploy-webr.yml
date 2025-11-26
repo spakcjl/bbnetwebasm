@@ -28,7 +28,12 @@ jobs:
       - name: Build R package for Wasm
         uses: r-wasm/actions/build-rwasm@v1
         with:
-          packages: "."
+          packages: |
+            ggplot2
+            igraph
+            dplyr
+            tibble
+            .
           repo-path: "webr-repo"
 
       - name: Verify Wasm Build
