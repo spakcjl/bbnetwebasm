@@ -28,34 +28,35 @@ jobs:
       - name: Resolve Dependencies
         run: |
           install.packages("pak", repos = "https://r-lib.github.io/p/pak/devel/")
-          deps <- pak::pkg_deps(".", dependencies = TRUE)
-          # Filter out base packages as they are already present
+          
+          # Use pak to get a topologically sorted installation plan
+          prop <- pak::new_pkg_installation_proposal(".", dependency = TRUE)
+          prop$resolve()
+          prop$solve()
+          
+          sol <- prop$get_solution()$data
+          # The solution is usually ordered by installation order
+          
+          # Filter out the source package itself (it will be built last by the action logic)
+          # "source" type usually indicates the local package in this context
+          # But checking name is safer.
+          pkg_list <- sol$package[sol$package != "bbnetwebasm"]
+          
+          # Filter out base/recommended packages that are pre-installed
           base_pkgs <- installed.packages(priority = "base")[, "Package"]
-          deps <- deps[!deps$package %in% base_pkgs, ]
-          
-          # Get the list of package sources/names
-          # We want the package names. pak handles sources if defined in DESCRIPTION, 
-          # but for general CRAN deps, names are fine.
-          pkg_list <- unique(deps$package)
-          
-          # Ensure bbnetwebasm (current package) is included, but put it last?
-          # build-rwasm usually handles order, but let's just pass the set.
-          # We explicitly add "." for the local package.
-          pkg_list <- pkg_list[pkg_list != "bbnetwebasm"]
+          pkg_list <- pkg_list[!pkg_list %in% base_pkgs]
           
           # WORKAROUND: Force CRAN version of igraph to avoid tar/zip errors with rigraph
-          # We only need it for build-time checks; runtime uses the public webR binary.
           if ("igraph" %in% pkg_list) {
             pkg_list[pkg_list == "igraph"] <- "cran::igraph"
           }
           
+          # Explicitly add the local package at the end
           pkg_list <- c(pkg_list, ".")
           
-          cat("Identified dependencies:\n")
+          cat("Identified dependencies (ordered):\n")
           print(pkg_list)
           
-          # Export to GITHUB_ENV
-          # Multiline string format for GITHUB_ENV
           cat("PKG_LIST<<EOF\n", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
           cat(pkg_list, sep = "\n", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
           cat("EOF\n", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
