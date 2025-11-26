@@ -79,3 +79,11 @@ button:active {
     white-space: pre-wrap;
     min-height: 50px;
 }
+
+#terminal {
+    height: 400px;
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden; /* Respect border radius */
+    border: 1px solid #ccc;
+}

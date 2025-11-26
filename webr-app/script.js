@@ -1,4 +1,6 @@
 import { WebR } from 'https://webr.r-wasm.org/v0.4.2/webr.mjs';
+import { Terminal } from 'https://cdn.jsdelivr.net/npm/xterm@5.3.0/+esm';
+import { FitAddon } from 'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/+esm';
 
 const statusDiv = document.getElementById('status');
 const runButton = document.getElementById('run-button');
@@ -6,6 +8,90 @@ const consoleOutput = document.getElementById('console-output');
 const plotOutput = document.getElementById('plot-output');
 
 let webR;
+let shelter;
+
+// Terminal Setup
+const term = new Terminal({
+    cursorBlink: true,
+    theme: {
+        background: '#2d2d2d',
+        foreground: '#f8f8f2'
+    }
+});
+const fitAddon = new FitAddon();
+term.loadAddon(fitAddon);
+term.open(document.getElementById('terminal'));
+fitAddon.fit();
+
+let currentLine = '';
+
+term.writeln('\x1b[1;32mWelcome to the bbnetwebasm R Terminal!\x1b[0m');
+term.writeln('Type R code and press Enter to run.');
+term.write('\r\n> ');
+
+// Simple REPL Input Handler
+term.onData(e => {
+    switch (e) {
+        case '\r': // Enter
+            term.write('\r\n');
+            runTerminalCommand(currentLine);
+            currentLine = '';
+            break;
+        case '\u007F': // Backspace
+            if (currentLine.length > 0) {
+                term.write('\b \b');
+                currentLine = currentLine.slice(0, -1);
+            }
+            break;
+        default: // Typing
+            // Basic filter to avoid control characters breaking things
+            if (e >= ' ' && e <= '~') {
+                currentLine += e;
+                term.write(e);
+            }
+    }
+});
+
+async function runTerminalCommand(code) {
+    if (!code.trim()) {
+        term.write('> ');
+        return;
+    }
+
+    if (!webR) {
+        term.writeln('\x1b[31mWebR not ready yet.\x1b[0m');
+        term.write('> ');
+        return;
+    }
+
+    try {
+        if (!shelter) shelter = await new webR.Shelter();
+        
+        // Capture output
+        const result = await shelter.captureR(code, {
+            withAutoprint: true,
+            captureStreams: true,
+            captureConditions: true
+        });
+
+        result.output.forEach(line => {
+            if (line.type === 'stdout') {
+                term.writeln(line.data);
+            } else if (line.type === 'stderr') {
+                term.writeln(`\x1b[31m${line.data}\x1b[0m`); // Red for stderr
+            }
+        });
+        
+        // Handle plots if any (rudimentary check)
+        // In a real console, plots are harder to inline. 
+        // We could check if a plot was generated in /tmp/Rtmp... and display it in the plot area.
+        
+    } catch (e) {
+        term.writeln(`\x1b[31mError: ${e.message}\x1b[0m`);
+    } finally {
+        term.write('> ');
+    }
+}
 
 async function initWebR() {
     statusDiv.textContent = 'Initializing webR...';
