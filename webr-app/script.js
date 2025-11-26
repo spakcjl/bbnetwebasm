@@ -173,7 +173,8 @@ async function executeR(code) {
                 const img = document.createElement('img');
                 img.src = url;
                 plotOutput.appendChild(img);
-                plotOutput.style.display = 'flex'; // Force visible
+                plotOutput.style.display = 'block'; // Ensure it's visible
+                term.writeln(`\x1b[90m> [Debug] Plot image URL: ${url}\x1b[0m`);
             }
             // Cleanup? Maybe keep for history or debug.
         } catch (e) {
