@@ -1,6 +1,7 @@
 name: Deploy webR App
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
