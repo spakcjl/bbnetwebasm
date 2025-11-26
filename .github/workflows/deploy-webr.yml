@@ -25,15 +25,39 @@ jobs:
           r-version: '4.4'
           use-public-rspm: true
 
+      - name: Resolve Dependencies
+        run: |
+          install.packages("pak", repos = "https://r-lib.github.io/p/pak/devel/")
+          deps <- pak::pkg_deps(".", dependencies = TRUE)
+          # Filter out base packages as they are already present
+          base_pkgs <- installed.packages(priority = "base")[, "Package"]
+          deps <- deps[!deps$package %in% base_pkgs, ]
+          
+          # Get the list of package sources/names
+          # We want the package names. pak handles sources if defined in DESCRIPTION, 
+          # but for general CRAN deps, names are fine.
+          pkg_list <- unique(deps$package)
+          
+          # Ensure bbnetwebasm (current package) is included, but put it last?
+          # build-rwasm usually handles order, but let's just pass the set.
+          # We explicitly add "." for the local package.
+          pkg_list <- pkg_list[pkg_list != "bbnetwebasm"]
+          pkg_list <- c(pkg_list, ".")
+          
+          cat("Identified dependencies:\n")
+          print(pkg_list)
+          
+          # Export to GITHUB_ENV
+          # Multiline string format for GITHUB_ENV
+          cat("PKG_LIST<<EOF\n", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+          cat(pkg_list, sep = "\n", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+          cat("EOF\n", file = Sys.getenv("GITHUB_ENV"), append = TRUE)
+        shell: Rscript {0}
+
       - name: Build R package for Wasm
         uses: r-wasm/actions/build-rwasm@v1
         with:
-          packages: |
-            ggplot2
-            igraph
-            dplyr
-            tibble
-            .
+          packages: ${{ env.PKG_LIST }}
           repo-path: "webr-repo"
 
       - name: Verify Wasm Build
