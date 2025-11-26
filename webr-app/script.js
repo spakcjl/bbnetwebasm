@@ -36,37 +36,19 @@ async function initWebR() {
             console.warn('Error fetching PACKAGES:', e);
         }
 
-        // Check that the tarball is reachable
-        const tarballUrl = new URL('src/contrib/bbnetwebasm_1.0.0.tar.gz', repoURL).toString();
-        try {
-            const tbResp = await fetch(tarballUrl, { method: 'HEAD' });
-            console.log('Tarball HEAD status', tbResp.status, tarballUrl);
-            if (!tbResp.ok) {
-                statusDiv.innerHTML += `<br>Tarball not reachable (${tbResp.status}) at ${tarballUrl}`;
-            }
-        } catch (e) {
-            console.warn('Error fetching tarball:', e);
-        }
-
-        // Install dependencies manually
-        statusDiv.innerHTML += '<br>Installing dependencies (igraph, ggplot2, dplyr, tibble)...';
-        await webR.installPackages(['igraph', 'ggplot2', 'dplyr', 'tibble'], {
-            repos: ['https://webr.r-wasm.org/latest/'] // Use webR's default repo
-        });
-
-        // Install the package
-        statusDiv.innerHTML += '<br>Installing bbnetwebasm...';
+        // Install the package and dependencies
+        statusDiv.innerHTML += '<br>Installing bbnetwebasm and dependencies...';
 
         try {
             console.log('Installing bbnetwebasm from repo', repoURL);
-            // Explicitly set type to 'source' because our repo only has src/contrib, not bin/emscripten
+            // We provide both our local repo and the public webR repo.
+            // This allows webR to find our package locally and resolve dependencies from the public repo.
             await webR.installPackages(['bbnetwebasm'], {
-                repos: [repoURL],
-                type: 'source'
+                repos: [repoURL, 'https://webr.r-wasm.org/latest/']
             });
         } catch (err) {
-            console.error('Install from local repo failed', err);
-            statusDiv.innerHTML += '<br>Install from local repo failed: ' + err.message;
+            console.error('Install failed', err);
+            statusDiv.innerHTML += '<br>Install failed: ' + err.message;
         }
 
         // Verify install by attempting to load the package
