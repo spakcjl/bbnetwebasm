@@ -4,11 +4,49 @@ import { FitAddon } from 'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/+es
 
 const statusDiv = document.getElementById('status');
 const runCodeBtn = document.getElementById('run-code-btn');
+const startTourBtn = document.getElementById('start-tour-btn');
 const plotOutput = document.getElementById('plot-output');
 
 let webR;
 let shelter;
 let editor;
+
+// --- Tour Logic ---
+const tourSteps = [
+    { label: "Setup", code: 'data(my_network); data(my_BBN); data(dogwhelk);' },
+    { label: "Sphere Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_on_sphere)' },
+    { label: "Grid Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_on_grid)' },
+    { label: "Circle Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_circle)' },
+    { label: "Random Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_random)' },
+    { label: "Time Series", code: 'bbn.timeseries(bbn.model = my_BBN, priors1 = dogwhelk, timesteps = 6, disturbance = 1)' }
+];
+
+async function runTour() {
+    if (!webR) return;
+    
+    startTourBtn.disabled = true;
+    term.writeln('\x1b[1;35m--- Starting Demo Tour ---\x1b[0m');
+
+    for (const step of tourSteps) {
+        term.writeln(`\x1b[35m> [Tour] ${step.label}...\x1b[0m`);
+        
+        // Update editor to show what's running (optional, nice touch)
+        if (editor) {
+            // Don't replace whole content, maybe just highlight or comment?
+            // Actually, let's not touch user code, just run it.
+        }
+
+        await executeR(step.code);
+        
+        // Wait 3 seconds
+        await new Promise(r => setTimeout(r, 3000));
+    }
+
+    term.writeln('\x1b[1;35m--- Tour Complete ---\x1b[0m');
+    startTourBtn.disabled = false;
+}
+
+startTourBtn.onclick = runTour;
 
 // --- Layout & Terminal Setup ---
 
@@ -279,6 +317,7 @@ async function initWebR() {
         statusDiv.style.backgroundColor = '#d4edda';
         statusDiv.style.color = '#155724';
         runCodeBtn.disabled = false;
+        startTourBtn.disabled = false;
         term.writeln('\x1b[32mWebR Ready! bbnetwebasm loaded.\x1b[0m');
         term.write('> ');
 
