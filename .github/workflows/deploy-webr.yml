@@ -31,7 +31,7 @@ jobs:
             -v "$(pwd):/github/workspace" \
             --workdir "/github/workspace" \
             -e GITHUB_PAT=${{ secrets.GITHUB_TOKEN }} \
-            ghcr.io/r-wasm/webr:main \
+            ghcr.io/r-wasm/webr:v0.4.2 \
             Rscript -e "
               options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/latest'));
               install.packages('pak');
