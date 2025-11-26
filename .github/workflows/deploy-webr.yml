@@ -35,20 +35,17 @@ jobs:
           deps <- pak::pkg_deps(".", dependencies = TRUE)
           pkgs <- deps$package
           
-          # Ensure cpp11 is in the list (it is a build dep of igraph/rigraph)
-          if (!"cpp11" %in% pkgs) {
-             pkgs <- c(pkgs, "cpp11")
-             # Re-resolve deps for cpp11 if needed, but it has none usually.
-          }
-
-          # Build adjacency list
+          # Build adjacency list for identified deps
           adj <- setNames(lapply(deps$deps, function(x) {
             if (is.null(x) || nrow(x) == 0) return(character(0))
             intersect(x$package, pkgs)
           }), pkgs)
           
-          # Manual adjacency for cpp11 if it was added manually
-          if (is.null(adj[["cpp11"]])) adj[["cpp11"]] <- character(0)
+          # Ensure cpp11 is in the list (it is a build dep of igraph/rigraph)
+          if (!"cpp11" %in% pkgs) {
+             pkgs <- c(pkgs, "cpp11")
+             adj[["cpp11"]] <- character(0)
+          }
           
           sorted <- character(0)
           visited <- new.env(parent = emptyenv())
