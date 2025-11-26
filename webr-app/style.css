@@ -83,31 +83,26 @@ button:disabled {
 #plot-output {
     background: white;
     overflow: auto;
-    max-height: 40%;
     border-bottom: 1px solid #444;
     display: flex;
     justify-content: center;
-    padding: 10px;
-}
-
-#plot-output:empty {
-    display: none;
+    align-items: center; /* Center image */
+    /* Removed max-height to let Split.js control it */
 }
 
 #plot-output img {
     max-width: 100%;
+    max-height: 100%; /* Fit within the pane */
     height: auto;
+    object-fit: contain;
 }
 
 #terminal-container {
-    flex: 1;
-    position: relative; /* For xterm fitting */
+    /* flex: 1;  Removed, Split.js handles sizing */
+    position: relative;
     padding: 5px;
-}
-
-#terminal {
-    height: 100%;
-    width: 100%;
+    background-color: #2d2d2d;
+    overflow: hidden;
 }
 
 /* Split.js Gutters */
@@ -115,10 +110,14 @@ button:disabled {
     background-color: #eee;
     background-repeat: no-repeat;
     background-position: 50%;
-    cursor: col-resize;
 }
 
 .gutter.gutter-horizontal {
     background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoiM3FwQGAMBAEsJxx/8F4x0E4uK0k+bTq7r828wLDngxN42AA+QAAAABJRU5ErkJggg==');
-    width: 10px;
+    cursor: col-resize;
+}
+
+.gutter.gutter-vertical {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
+    cursor: row-resize;
 }

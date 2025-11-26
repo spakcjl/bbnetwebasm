@@ -13,9 +13,17 @@ let editor;
 // --- Layout & Terminal Setup ---
 
 // Split Panes
-Split(['#source-pane', '#console-pane'], {
+const mainSplit = Split(['#source-pane', '#console-pane'], {
     sizes: [50, 50],
     minSize: 200,
+    gutterSize: 10,
+    onDragEnd: () => fitAddon.fit()
+});
+
+const consoleSplit = Split(['#plot-output', '#terminal-container'], {
+    direction: 'vertical',
+    sizes: [40, 60],
+    minSize: 100,
     gutterSize: 10,
     onDragEnd: () => fitAddon.fit()
 });
@@ -227,7 +235,7 @@ async function executeR(code) {
                 const img = document.createElement('img');
                 img.src = url;
                 plotOutput.appendChild(img);
-                plotOutput.style.display = 'block'; // Ensure it's visible
+                // plotOutput.style.display = 'block'; // Controlled by Split.js now
                 term.writeln(`\x1b[90m> [Debug] Plot image URL: ${url}\x1b[0m`);
             }
             // Cleanup? Maybe keep for history or debug.
