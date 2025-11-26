@@ -25,16 +25,17 @@ jobs:
           r-version: '4.4'
           use-public-rspm: true
 
-      - name: Install pak
-        run: install.packages("pak", repos = "https://r-lib.github.io/p/pak/devel/")
-        shell: Rscript {0}
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+        shell: bash
 
-      - name: Install rwasm
-        run: pak::pkg_install("r-wasm/rwasm")
-        shell: Rscript {0}
-
-      - name: Install Local Dependencies
-        run: pak::pkg_install(".", dependencies = TRUE)
+      - name: Install R Packages
+        run: |
+          install.packages("remotes")
+          remotes::install_github("r-wasm/rwasm")
+          remotes::install_deps(".", dependencies = TRUE)
         shell: Rscript {0}
 
       - name: Setup Emscripten
