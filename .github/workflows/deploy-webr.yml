@@ -26,7 +26,7 @@ jobs:
           use-public-rspm: true
 
       - name: Setup webR toolchain (rwasm)
-        uses: r-wasm/actions/setup-rwasm@v1
+        uses: r-wasm/setup-rwasm@v1
         with:
           webr-version: "0.4.2"
 
