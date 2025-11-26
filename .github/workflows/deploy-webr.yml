@@ -47,6 +47,12 @@ jobs:
              adj[["cpp11"]] <- character(0)
           }
           
+          # Manually enforce dependency: igraph depends on cpp11
+          # This ensures topological sort places cpp11 BEFORE igraph
+          if ("igraph" %in% names(adj)) {
+             adj[["igraph"]] <- unique(c(adj[["igraph"]], "cpp11"))
+          }
+          
           sorted <- character(0)
           visited <- new.env(parent = emptyenv())
           
