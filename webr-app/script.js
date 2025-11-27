@@ -13,12 +13,18 @@ let editor;
 
 // --- Tour Logic ---
 const tourSteps = [
-    { label: "Setup", code: 'data(my_network); data(my_BBN); data(dogwhelk);' },
-    { label: "Sphere Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_on_sphere)' },
-    { label: "Grid Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_on_grid)' },
-    { label: "Circle Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_in_circle)' },
-    { label: "Random Layout", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_randomly)' },
-    { label: "Time Series", code: 'bbn.timeseries(bbn.model = my_BBN, priors1 = dogwhelk, timesteps = 6, disturbance = 1)' }
+    { label: "Setup (Rocky Shore Model)", code: 'data(my_network); data(my_BBN); data(dogwhelk); data(winkle); data(combined);' },
+    { label: "Network Diagram (Sphere)", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_on_sphere)' },
+    { label: "Network Diagram (Grid)", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_on_grid)' },
+    { label: "Network Diagram (Circle)", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_in_circle)' },
+    { label: "Network Diagram (Random)", code: 'bbn.network.diagram(bbn.network = my_network, font.size = 0.7, arrow.size = 4, arrange = igraph::layout_randomly)' },
+    { label: "Time Series (Rocky Shore)", code: 'bbn.timeseries(bbn.model = my_BBN, priors1 = dogwhelk, timesteps = 6, disturbance = 1)' },
+    { label: "Network Animation (Visualise)", code: 'bbn.visualise(bbn.model = my_BBN, priors1 = combined, timesteps = 5, disturbance = 1, threshold=0.1, font.size=0.7)' },
+    { label: "Sensitivity Analysis", code: 'bbn.sensitivity(bbn.model = my_BBN, boot_max = 50, "Limpet", "Green Algae")' },
+    { label: "Predictions (Dogwhelk vs Combined)", code: 'bbn.predict(bbn.model = my_BBN, priors1 = dogwhelk, priors2 = combined, figure = 2, font.size=0.7)' },
+    { label: "Setup (MPA Model)", code: 'data(MPANetwork); data(NoPotting); data(NoTake);' },
+    { label: "Predictions (No Potting vs No Take)", code: 'bbn.predict(bbn.model = MPANetwork, priors1 = NoPotting, priors2 = NoTake, figure = 2, font.size=0.7)' },
+    { label: "Time Series (MPA - No Take)", code: 'bbn.timeseries(bbn.model = MPANetwork, priors1 = NoTake, timesteps = 10)' }
 ];
 
 async function runTour() {
