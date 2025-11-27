@@ -123,15 +123,162 @@ require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-e
 require(['vs/editor/editor.main'], function() {
     editor = monaco.editor.create(document.getElementById('monaco-editor'), {
         value: [
-            "# --- bbnetwebasm Demo (based on Vignette) ---",
-            "",
-            "# 1. Setup",
+            "# --- bbnetwebasm Demo ---",
             "library(bbnetwebasm)",
-            "",
-            "# 2. Importing Data",
-            "# The package includes example datasets for a Rocky Shore model.",
             "data(\"my_BBN\")",
-            "# print(head(my_BBN))",
-            "",
-            "# Load scenarios (Dogwhelk removal, Winkle addition, Combined)",
+            "# See Tour for more examples."
+        ].join('\n'),
+        language: 'r',
+        theme: 'vs-light',
+        automaticLayout: true,
+        minimap: { enabled: false }
+    });
+
+    // Ctrl+Enter to run
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runEditorCode);
+});
+
+// --- Execution Logic ---
+
+async function runTerminalCommand(code) {
+    if (!code.trim()) {
+        term.write('> ');
+        return;
+    }
+    await executeR(code, "Console Output");
+    term.write('> ');
+}
+
+async function runEditorCode() {
+    if (!editor || !webR) return;
+    
+    // Get selected text or full text
+    const selection = editor.getModel().getValueInRange(editor.getSelection());
+    const code = selection || editor.getValue();
+    
+    if (!code.trim()) return;
+
+    // Echo to terminal
+    term.writeln(`\x1b[32m> [Run] Executing code...\x1b[0m`);
+    
+    await executeR(code, "User Plot");
+    term.write('> ');
+}
+
+async function executeR(code, label = null) {
+    if (!webR) {
+        term.writeln('\x1b[31mWebR not ready.\x1b[0m');
+        return;
+    }
+
+    try {
+        if (!shelter) shelter = await new webR.Shelter();
+
+        term.writeln('\x1b[90m> [Debug] Executing wrapped code...\x1b[0m');
+
+        // Wrap user code to capture plot
+        const fullCode = `
+            png("/tmp/plot.png", width=800, height=600, res=150)
+            tryCatch({
+                ${code}
+            }, finally = {
+                dev.off()
+            })
+        `;
+
+        // Execute User Code
+        const result = await shelter.captureR(fullCode, {
+            withAutoprint: true,
+            captureStreams: true,
+            captureConditions: true
+        });
+
+        result.output.forEach(line => {
+            if (line.type === 'stdout') {
+                term.writeln(line.data);
+            } else if (line.type === 'stderr') {
+                term.writeln(`\x1b[31m${line.data}\x1b[0m`);
+            }
+        });
+
+        // Handle Plot
+        try {
+            const plotData = await webR.FS.readFile('/tmp/plot.png');
+            term.writeln(`\x1b[90m> [Debug] Plot file found. Size: ${plotData.length} bytes.\x1b[0m`);
             
+            // Check if it's a valid non-empty image (PNG header usually)
+            if (plotData.length > 0) {
+                const blob = new Blob([plotData], { type: 'image/png' });
+                const url = URL.createObjectURL(blob);
+                
+                plotOutput.innerHTML = ''; 
+                
+                // Add Title
+                if (label) {
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'plot-label';
+                    titleDiv.textContent = label;
+                    plotOutput.appendChild(titleDiv);
+                }
+
+                const img = document.createElement('img');
+                img.src = url;
+                plotOutput.appendChild(img);
+                // plotOutput.style.display = 'block'; // Controlled by Split.js now
+                term.writeln(`\x1b[90m> [Debug] Plot image URL: ${url}\x1b[0m`);
+            }
+            // Cleanup? Maybe keep for history or debug.
+        } catch (e) {
+            // No plot file created (normal for non-plotting code)
+            term.writeln('\x1b[90m> [Debug] No plot generated.\x1b[0m');
+        }
+
+    } catch (e) {
+        term.writeln(`\x1b[31mError: ${e.message}\x1b[0m`);
+        // Try to close device if code failed
+        try { await webR.evalR('dev.off()'); } catch (e2) {}
+    } finally {
+        // shelter.purge(); 
+    }
+}
+
+runCodeBtn.onclick = runEditorCode;
+
+// --- WebR Initialization ---
+
+async function initWebR() {
+    statusDiv.textContent = 'Initializing webR...';
+
+    try {
+        webR = new WebR();
+        await webR.init();
+
+        statusDiv.textContent = 'Installing bbnetwebasm...';
+
+        const repoURL = new URL('./repo/', window.location.href).toString();
+        
+        await webR.installPackages(['bbnetwebasm'], {
+            repos: [repoURL, 'https://repo.r-wasm.org/']
+        });
+
+        // Load the library
+        await webR.evalR('library(bbnetwebasm)');
+
+        statusDiv.textContent = 'Ready';
+        statusDiv.style.backgroundColor = '#d4edda';
+        statusDiv.style.color = '#155724';
+        runCodeBtn.disabled = false;
+        startTourBtn.disabled = false;
+        term.writeln('\x1b[32mWebR Ready! bbnetwebasm loaded.\x1b[0m');
+        term.write('> ');
+
+    } catch (error) {
+        console.error('Error initializing webR:', error);
+        statusDiv.innerHTML = 'Error: ' + error.message;
+        statusDiv.style.backgroundColor = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+        term.writeln(`\x1b[31mWebR Init Failed: ${error.message}\x1b[0m`);
+    }
+}
+
+initWebR();
