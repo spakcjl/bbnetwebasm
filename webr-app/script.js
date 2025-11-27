@@ -130,3 +130,8 @@ require(['vs/editor/editor.main'], function() {
             "",
             "# 2. Importing Data",
             "# The package includes example datasets for a Rocky Shore model.",
+            "data(\"my_BBN\")",
+            "# print(head(my_BBN))",
+            "",
+            "# Load scenarios (Dogwhelk removal, Winkle addition, Combined)",
+            
