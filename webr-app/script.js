@@ -33,14 +33,16 @@ async function runTour() {
     startTourBtn.disabled = true;
     term.writeln('\x1b[1;35m--- Starting Demo Tour ---\x1b[0m');
 
-    for (const step of tourSteps) {
-        term.writeln(`\x1b[35m> [Tour] ${step.label}...[0m`);
-        
-        // Show code in editor
-        if (editor) {
-            editor.setValue(step.code);
-        }
+    // Show full script in editor once at the start
+    if (editor) {
+        const fullScript = tourSteps.map(s => `## ${s.label}\n${s.code}`).join('\n\n');
+        editor.setValue(fullScript);
+    }
 
+    for (const step of tourSteps) {
+        term.writeln(`\x1b[35m> [Tour] ${step.label}...\x1b[0m`);
+        
+        // Execute step with label
         await executeR(step.code, step.label);
         
         // Wait 3 seconds
@@ -176,9 +178,9 @@ async function executeR(code, label = null) {
 
         term.writeln('\x1b[90m> [Debug] Executing wrapped code...\x1b[0m');
 
-        // Wrap user code to capture plot
+        // Wrap user code to capture plot with higher resolution
         const fullCode = `
-            png("/tmp/plot.png", width=800, height=600, res=150)
+            png("/tmp/plot.png", width=1200, height=900, res=150)
             tryCatch({
                 ${code}
             }, finally = {
@@ -206,7 +208,7 @@ async function executeR(code, label = null) {
             const plotData = await webR.FS.readFile('/tmp/plot.png');
             term.writeln(`\x1b[90m> [Debug] Plot file found. Size: ${plotData.length} bytes.\x1b[0m`);
             
-            // Check if it's a valid non-empty image (PNG header usually)
+            // Check if it's a valid non-empty image
             if (plotData.length > 0) {
                 const blob = new Blob([plotData], { type: 'image/png' });
                 const url = URL.createObjectURL(blob);
@@ -227,7 +229,6 @@ async function executeR(code, label = null) {
                 // plotOutput.style.display = 'block'; // Controlled by Split.js now
                 term.writeln(`\x1b[90m> [Debug] Plot image URL: ${url}\x1b[0m`);
             }
-            // Cleanup? Maybe keep for history or debug.
         } catch (e) {
             // No plot file created (normal for non-plotting code)
             term.writeln('\x1b[90m> [Debug] No plot generated.\x1b[0m');
@@ -236,7 +237,7 @@ async function executeR(code, label = null) {
     } catch (e) {
         term.writeln(`\x1b[31mError: ${e.message}\x1b[0m`);
         // Try to close device if code failed
-        try { await webR.evalR('dev.off()'); } catch (e2) {}
+        try { await webR.evalR('dev.off()'); } catch (e2) {} 
     } finally {
         // shelter.purge(); 
     }
